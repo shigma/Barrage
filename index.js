@@ -1,7 +1,8 @@
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
-const Bullet = require('./Bullet')
+const { Point } = require('./Bullet')
+const Barrage = require('./Barrage')
 
 new Vue({
   el: '#app',
@@ -14,24 +15,34 @@ new Vue({
 
   mounted() {
     const canvas = this.$refs.canvas
-    this.ctx = canvas.getContext('2d')
-    this.bullet = new Bullet({
-      x: 100,
-      y: 100,
-      r: 25,
-      v: 5,
-      t: Math.PI / 3,
-      c: 'blue',
-      ctx: this.ctx
+    this.context = canvas.getContext('2d')
+    this.barrage = new Barrage({
+      context: this.context,
+      source: new Point({ x: 200, y: 200, v: 0, t: 0 }),
+      generator() {
+        const result = []
+        for (let i = 0; i < 6; i++) {
+          result.push({
+            x: this.source.x,
+            y: this.source.y,
+            r: 10,
+            v: 6,
+            t: Math.PI / 5 + Math.PI / 6 * i,
+            c: 'blue' 
+          })
+        }
+        return result
+      },
+      interval: 5000,
+      waves: 5
     })
-    this.bullet.draw()
+    this.barrage.draw()
   },
 
   methods: {
     display() {
-      this.ctx.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-      this.bullet.draw()
-      this.bullet.mutate()
+      this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      this.barrage.draw()
       this.active = requestAnimationFrame(this.display)
     },
     toggle() {
