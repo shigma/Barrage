@@ -17,6 +17,11 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
+    "eslint": "^5.0.1",
     "electron": "^2.0.0"
+  },
+  "dependencies": {
+    "vue": "^2.5.16",
+    "vue-template-compiler": "^2.5.16"
   }
 }
