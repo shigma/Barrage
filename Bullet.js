@@ -1,17 +1,10 @@
 class Point {
-  constructor(state, mutate) {
-    Object.assign(this, state)
-    this.mutate = mutate || (() => {})
-  }
-}
-
-class Bullet extends Point {
-  constructor(state, mutate, context) {
-    super(state, mutate)
-    this.context = context
+  constructor(data) {
+    Object.assign(this, data)
   }
 
   draw() {
+    if (!this.context) return
     this.context.beginPath()
     this.context.arc(this.x, this.y, this.r, 0, Math.PI * 2, true)
     this.context.closePath()
@@ -19,9 +12,51 @@ class Bullet extends Point {
     this.context.fill()
   }
 
+  get canvas() {
+    if (this.context) {
+      return this.context.canvas
+    } else {
+      return undefined
+    }
+  }
+
   get offCanvas() {
-    return this.x > this.context.canvas.width || this.x < 0
-      || this.y > this.context.canvas.height || this.y < 0
+    if (!this.context) return false
+    return this.x > this.canvas.width || this.x < 0
+      || this.y > this.canvas.height || this.y < 0
+  }
+}
+
+class Self extends Point {
+  constructor(data) {
+    super(data)
+  }
+
+  update() {
+    const speed = this.v / Math.sqrt(
+      (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
+      (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
+    )
+
+    this.x += speed * this.keyState.ArrowRight
+    this.x -= speed * this.keyState.ArrowLeft
+    this.y += speed * this.keyState.ArrowDown
+    this.y -= speed * this.keyState.ArrowUp
+    
+    if (this.x < 0) this.x = 0
+    if (this.y < 0) this.y = 0
+    if (this.x > this.canvas.width) this.x = this.canvas.width
+    if (this.y > this.canvas.height) this.y = this.canvas.height
+
+    this.draw()
+  }
+}
+
+class Bullet extends Point {
+  constructor(state, mutate, context) {
+    super(state)
+    this.mutate = mutate
+    this.context = context
   }
 }
 
@@ -50,4 +85,4 @@ Bullet.ReboundOnBorder = function() {
   if (x > this.context.canvas.width || x < 0) this.t = Math.PI - this.t
 }
 
-module.exports = { Point, Bullet }
+module.exports = { Point, Bullet, Self }

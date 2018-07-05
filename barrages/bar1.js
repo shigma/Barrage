@@ -2,9 +2,14 @@ const { Point } = require('../Bullet')
 const Utility = require('../utility')
 
 module.exports = {
-  source: new Point({ x: 200, y: 200, f: 0 }, function(time) {
-    this.face = time / 1000 * Math.PI
-    this.x = 200 + Math.sin(time / 1000) * 100
+  source: new Point({
+    x: 200,
+    y: 200,
+    f: 0,
+    mutate(time) {
+      this.face = time / 1000 * Math.PI
+      this.x = 200 + Math.sin(time / 1000) * 100
+    }
   }),
   generate: function(time) {
     const result = []

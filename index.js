@@ -2,6 +2,7 @@ const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
 const Barrage = require('./Barrage')
+const { Self } = require('./Bullet')
 
 new Vue({
   el: '#app',
@@ -12,27 +13,32 @@ new Vue({
       active: null,
       stopTime: 0,
       lastTime: 0,
-      x: 0,
-      y: 0,
-      aleft: false, aright: false, aup: false, adown: false,
-      v: 5,
+      keyState: {
+        ArrowLeft: false,
+        ArrowDown: false,
+        ArrowRight: false,
+        ArrowUp: false
+      }
     }
   },
 
   mounted() {
-    
     const canvas = this.$refs.canvas
-
-    this.x = this.$refs.canvas.width/2,
-    this.y = this.$refs.canvas.height/8*7,
-
     this.context = canvas.getContext('2d')
 
-    document.addEventListener("keydown",event => this.accelerate(event,true));
-    document.addEventListener("keyup",event => this.accelerate(event,false));
+    this.self = new Self({
+      context: this.context,
+      keyState: this.keyState,
+      x: canvas.width / 2,
+      y: canvas.height / 8 * 7,
+      v: 8,
+      r: 4,
+      c: 'black'
+    })
 
+    this.self.draw()
     this.addBarrage(require('./barrages/bar1'))
-    this.barrages.forEach(barrage => barrage.mutate())
+    this.barrages.forEach(barrage => barrage.update())
   },
 
   methods: {
@@ -48,10 +54,8 @@ new Vue({
     },
     display(timestamp) {
       this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-      this.barrages.forEach(barrage => barrage.mutate(timestamp - this.stopTime))
-
-      this.updateself();
-
+      this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
+      this.self.update()
       this.active = requestAnimationFrame(this.display)
     },
     toggle() {
@@ -63,68 +67,17 @@ new Vue({
         this.stopTime += performance.now() - this.lastTime
         this.active = requestAnimationFrame(this.display)
       }
-    },
-    accelerate(event,dir){
-      switch(event.key){
-        case 'ArrowLeft':{//left
-          this.aleft=dir;
-          break;
-        }
-        case 'ArrowUp':{//up
-          this.aup=dir;
-          break;
-        }
-        case 'ArrowRight':{//right
-          this.aright=dir;
-          break;
-        }
-        case 'ArrowDown':{//down
-          this.adown=dir;
-          break;
-        }
-      }
-    },
-    updateself(){
-      var speed = this.v;
-      var ss = 0;
-      var sizex = 10, sizey = 10;
-      var scrw = this.$refs.canvas.width, scrh = this.$refs.canvas.height;
-
-      if(this.aup||this.adown)ss++;
-      if(this.aright||this.aleft)ss++;
-      speed/=Math.sqrt(ss);
-      
-      if(this.aleft){
-        this.x-=speed;
-      }
-      if(this.aright){
-        this.x+=speed;
-      }
-      if(this.aup){
-        this.y-=speed;
-      }
-      if(this.adown){
-        this.y+=speed;
-      }
-      
-      if(this.x<0)this.x=0;
-      if(this.y<0)this.y=0;
-      if(this.x>scrw-sizex)self.x=scrw-sizex;
-      if(this.y>scrh-sizey)self.y=scrh-sizey;
-
-      this.context.fillStyle = 'yellow';
-      this.context.fillRect(this.x,this.y,sizex,sizey);
-
     }
   },
 
-  template: `<div class="main">
+  template: `<div class="main"
+    @keydown="keyState[$event.key] = true"
+    @keyup="keyState[$event.key] = false">
     <canvas class="left" ref="canvas" width="400" height="600"/>
     <div class="right" ref="div">
       <button @click="toggle">
         <div>{{ active ? 'Pause' : active === null ? 'Start' : 'Resume' }}</div>
       </button>
-      </div><p>{{x}}</p><p>{{aup}}</p>
     </div>
   </div>`
 })
