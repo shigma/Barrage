@@ -1,25 +1,46 @@
-const { Point, Bullet } = require('./Bullet')
+const { Bullet } = require('./Bullet')
 
-module.exports = class Barrage {
-  constructor({source, target, generator, context, interval, waves = 1}) {
-    this.source = source 
+class Barrage {
+  constructor({source, target, generate, context, emitter}) {
+    this.source = source
     this.target = target
     this.context = context
+    this.emitter = emitter
+    this.generate = generate
     this.bullets = []
-    const _this = this
-    function emit() {
-      _this.bullets.push(...generator.call(_this).map((data) => {
-        return new Bullet(data, context)
-      }))
-      if (--waves) clearTimeout(task)
-    }
-    const task = setInterval(emit, interval)
+    this.timeline = 0
   }
 
-  draw() {
-    this.bullets.forEach(bullet => {
+  mutate(time = 0) {
+    if (this.emitter(time)) {
+      this.bullets.push(...this.generate(time).map((data) => {
+        return Bullet[data.mode](data, data.mutate, this.context)
+      }))
+    }
+    this.timeline = time
+    if (this.source.mutate) this.source.mutate(time)
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      const bullet = this.bullets[i]
+      bullet.mutate(time)
       bullet.draw()
-      bullet.mutate()
-    })
+      if (bullet.offCanvas) this.bullets.splice(i, 1)
+    }
   }
 }
+
+Barrage.mapBullet = function({mode, count, initial, step, mutate}) {
+  const result = [], current = Object.assign({}, initial)
+  for (let index = 0; index < count; index++) {
+    result.push(Object.assign({mode, mutate}, current))
+    for (const key in step) {
+      if (step[key] instanceof Function) {
+        current[key] = step[key](current[key])
+      } else {
+        current[key] += step[key]
+      }
+    }
+  }
+  return result
+}
+
+module.exports = Barrage
