@@ -32,6 +32,13 @@ class Self extends Point {
     super(data)
   }
 
+  initialize(context) {
+    if (context) this.context = context
+    this.x = this.canvas.width / 2
+    this.y = this.canvas.height / 8 * 7
+    this.draw()
+  }
+
   update() {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
