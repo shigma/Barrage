@@ -20,6 +20,7 @@ new Vue({
   },
 
   mounted() {
+    
     const canvas = this.$refs.canvas
 
     this.x = this.$refs.canvas.width/2,
