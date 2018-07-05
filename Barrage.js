@@ -12,13 +12,13 @@ class Barrage {
   }
 
   mutate(time = 0) {
+    if (this.source.mutate) this.source.mutate(time)
     if (this.emitter(time)) {
       this.bullets.push(...this.generate(time).map((data) => {
         return Bullet[data.mode](data, data.mutate, this.context)
       }))
     }
     this.timeline = time
-    if (this.source.mutate) this.source.mutate(time)
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const bullet = this.bullets[i]
       bullet.mutate(time)

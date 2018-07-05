@@ -1,6 +1,18 @@
+@font-face {
+    font-family: source-san-sans-CN;
+    src: url(./assets/SourceHanSansCN-Normal.otf);
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: source-san-sans-CN;
+    src: url(./assets/SourceHanSansCN-Bold.otf);
+    font-weight: bold;
+}
+
 .left {
     left: 0;
-    right: 50%;
+    width: 50%;
     top: 0;
     height: 100%;
     position: absolute;
@@ -8,8 +20,26 @@
 
 .right {
     left: 50%;
-    right: 100%;
+    width: 50%;
     top: 0;
     height: 100%;
     position: absolute;
+}
+
+button {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    transition: 0.5s ease;
+    padding: 0;
+    left: 50%;
+    border-radius: 8px;
+    position: absolute;
+    transform: translate(-50%);
+}
+
+button > div {
+    padding: 4px 12px;
+    font-size: 20px;
+    font-family: source-san-sans-CN;
 }
