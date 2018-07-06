@@ -10,7 +10,7 @@ class Point {
     this.timeline = -1
     this.birth = 0
   }
-  
+
   get canvas() {
     return this.context ? this.context.canvas : undefined
   }
@@ -23,6 +23,13 @@ class Point {
   get yabs() {
     const relative = this.ref[this.rel]
     return this.y + (relative ? relative.y : 0)
+  }
+
+  switchRel(rel) {
+    const relative = this.ref[this.rel]
+    this.x += relative.x - this.ref[rel].x
+    this.y += relative.y - this.ref[rel].y
+    this.rel = rel
   }
 
   draw() {
@@ -44,11 +51,14 @@ class Point {
 
   copy() {
     const _this = this
-    return Object.assign(new Point(this), {
-      locate() {
-        return Object.assign(this, new Point(_this))
-      }
-    })
+    function locate() {
+      return Object.assign({}, {
+        x: _this.x,
+        y: _this.y,
+        locate
+      })
+    }
+    return locate()
   }
 }
 
@@ -109,21 +119,39 @@ class Bullet extends Point {
     time -= this.birth
     this.mutate(time)
     this.draw(time)
-    this.listen(time)
-    this.timeline = time
-  }
-
-  listen(time) {
     for (const name in this.listener) {
       const result = this.listener[name].call(this, time)
       if (result) this.events.emit(name, result)
     }
+    this.timeline = time
   }
 
   polarLocate() {
-    const relTheta = this.ref.base.theta || 0
+    const relTheta = this.ref.base ? (this.ref.base.theta || 0) : 0
     this.x = this.rho * Math.cos(relTheta + this.theta)
     this.y = this.rho * Math.sin(relTheta + this.theta)
+  }
+
+  movePolar(rho, theta) {
+    this.x += rho * Math.cos(theta)
+    this.y += rho * Math.sin(theta)
+  }
+
+  getTheta(point) {
+    if (point.x === this.xabs) {
+      if (point.y >= this.yabs) {
+        return Math.PI / 2
+      } else {
+        return -Math.PI / 2
+      }
+    } else {
+      const result = Math.atan((point.y - this.yabs) / (point.x - this.xabs))
+      if (point.x > this.xabs) {
+        return result
+      } else {
+        return Math.PI + result
+      }
+    }
   }
 }
 

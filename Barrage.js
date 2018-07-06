@@ -2,7 +2,7 @@ const { Point, Bullet } = require('./Bullet')
 
 class Barrage {
   constructor({reference = {}, mutate, mounted}) {
-    this.ref = {}
+    this._ref = {}
     this.prop = {}
     this.bullets = []
     this.timeline = -1
@@ -10,16 +10,17 @@ class Barrage {
     this.mounted = mounted
     for (const key in reference) {
       if (reference[key] instanceof Point) {
-        this.ref[key] = reference[key]
+        this._ref[key] = reference[key]
       } else {
-        this.ref[key] = new Point(reference[key])
+        this._ref[key] = new Point(reference[key])
       }
     }
+    this.ref = this._ref
   }
 
   update(time = 0) {
-    for (const key in this.ref) {
-      this.ref[key].update(time)
+    for (const key in this._ref) {
+      this._ref[key].update(time)
     }
     this.bullets.push(...(this.mutate(time) || []).map(({
       state = {},
