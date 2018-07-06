@@ -57,7 +57,7 @@ class Self extends Point {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
       (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
-    )
+    ) / (this.keyState.Shift ? 2 : 1 )
 
     this.x += speed * this.keyState.ArrowRight
     this.x -= speed * this.keyState.ArrowLeft

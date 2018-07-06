@@ -12,7 +12,8 @@ new Vue({
       ArrowLeft: false,
       ArrowDown: false,
       ArrowRight: false,
-      ArrowUp: false
+      ArrowUp: false,
+      Shift: false
     }
     return {
       filename: '',
