@@ -1,30 +1,36 @@
-const { Bullet } = require('./Bullet')
+const { Point, Bullet } = require('./Bullet')
 
 class Barrage {
-  constructor({source, target, generate, context, emitter}) {
-    this.source = source
-    this.target = target
+  constructor({reference, context, emitter}) {
+    this.ref = {}
     this.context = context
     this.emitter = emitter
-    this.generate = generate
     this.bullets = []
     this.timeline = 0
+    for (const key in reference) {
+      if (reference[key] instanceof Point) {
+        this.ref[key] = reference[key]
+      } else {
+        this.ref[key] = new Point(reference[key])
+      }
+    }
   }
 
   update(time = 0) {
-    if (this.source.mutate) this.source.mutate(time)
-    if (this.emitter(time)) {
-      this.bullets.push(...this.generate(time).map((data) => {
-        return Bullet[data.mode](data, data.mutate, this.context)
-      }))
+    for (const key in this.ref) {
+      if (this.ref[key].mutate) this.ref[key].mutate(time)
     }
+    this.bullets.push(...(this.emitter(time) || []).map((data) => {
+      const bullet = new Bullet(data.mode, data.state, this.ref)
+      bullet.mutate = data.mutate
+      bullet.events = data.events
+      bullet.parent = this
+      bullet.id = Math.random() * 1e10
+      bullet.context = this.context
+      return bullet
+    }))
     this.timeline = time
-    for (let i = this.bullets.length - 1; i >= 0; i--) {
-      const bullet = this.bullets[i]
-      bullet.mutate(time)
-      bullet.draw()
-      if (bullet.offCanvas) this.bullets.splice(i, 1)
-    }
+    this.bullets.forEach(bullet => bullet.update(time))
   }
 }
 

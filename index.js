@@ -2,7 +2,6 @@ const { dialog } = require('electron').remote
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
-const Barrage = require('./Barrage')
 const { Self } = require('./Bullet')
 
 new Vue({
@@ -21,13 +20,12 @@ new Vue({
       active: null,
       stopTime: 0,
       lastTime: 0,
-      keyState,
       self: new Self({
         x: 0,
         y: 0,
         v: 8,
-        r: 6,
-        c: 'black',
+        radius: 6,
+        color: 'black',
         keyState
       })
     }
@@ -40,8 +38,7 @@ new Vue({
   },
 
   methods: {
-    addBarrage(object) {
-      const barrage = new Barrage(object)
+    addBarrage(barrage) {
       barrage.id = Math.random() * 1e10
       barrage.context = this.context
       this.barrages.push(barrage)
@@ -93,8 +90,8 @@ new Vue({
   },
 
   template: `<div class="main"
-    @keydown="keyState[$event.key] = true"
-    @keyup="keyState[$event.key] = false">
+    @keydown="self.keyState[$event.key] = true"
+    @keyup="self.keyState[$event.key] = false">
     <canvas class="left" ref="canvas" width="400" height="600"/>
     <div class="right" align="center" ref="div">
       <button @click="toggle">

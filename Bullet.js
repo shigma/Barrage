@@ -3,27 +3,29 @@ class Point {
     Object.assign(this, data)
   }
 
-  draw() {
-    if (!this.context) return
-    this.context.beginPath()
-    this.context.arc(this.x, this.y, this.r, 0, Math.PI * 2, true)
-    this.context.closePath()
-    this.context.fillStyle = this.c
-    this.context.fill()
+  get rel() {
+    return this.ref ? this.ref[this.relkey || 'base'] : undefined
   }
 
   get canvas() {
-    if (this.context) {
-      return this.context.canvas
-    } else {
-      return undefined
-    }
+    return this.context ? this.context.canvas : undefined
   }
 
-  get offCanvas() {
-    if (!this.context) return false
-    return this.x > this.canvas.width || this.x < 0
-      || this.y > this.canvas.height || this.y < 0
+  get xabs() {
+    return this.x + (this.rel ? this.rel.x : 0)
+  }
+
+  get yabs() {
+    return this.y + (this.rel ? this.rel.y : 0)
+  }
+
+  draw() {
+    if (!this.context) return
+    this.context.beginPath()
+    this.context.arc(this.xabs, this.yabs, this.radius, 0, Math.PI * 2)
+    this.context.closePath()
+    this.context.fillStyle = this.color
+    this.context.fill()
   }
 }
 
@@ -60,29 +62,65 @@ class Self extends Point {
 }
 
 class Bullet extends Point {
-  constructor(state, mutate, context) {
+  constructor(mode, state, reference) {
     super(state)
-    this.mutate = mutate
-    this.context = context
+    this.timeline = 0
+    this.ref = reference
+    this.move = Bullet.defaultMotions[mode]
+  }
+
+  update(time) {
+    if (this.move) this.move(time)
+    if (this.mutate) this.mutate(time)
+    this.draw(time)
+    this.listen(time)
+  }
+
+  listen(time) {
+    for (const name of Bullet.eventList) {
+      const event = this['has' + name](time)
+      if (event.result) {
+        event.target = this
+        if (this.events.onLeaveCanvas instanceof Function) {
+          this.events['on' + name].call(this.parent, event)
+        } else if (this.events.onLeaveCanvas !== 'none') {
+          Bullet.defaultCallback['on' + name].call(this.parent, event)
+        }
+      }
+    }
+  }
+  
+  hasLeaveCanvas() {
+    const top = this.yabs < 0
+    const left = this.xabs < 0
+    const right = this.xabs > this.canvas.width
+    const bottom = this.yabs > this.canvas.height
+    const result = top || left || right || bottom
+    return { top, left, right, bottom, result }
   }
 }
 
-Bullet.xyBullet = function(state, mutate, context) {
-  return new Bullet(state, function() {
-    this.x += this.v * Math.cos(this.t)
-    this.y += this.v * Math.sin(this.t)
-    if (mutate) mutate.call(this)
-  }, context)
+Bullet.eventList = [ 'LeaveCanvas' ]
+
+Bullet.defaultMotions = {
+  xyBullet() {
+    this.x += this.vpho * Math.cos(this.vtheta)
+    this.y += this.vpho * Math.sin(this.vtheta)
+  },
+  ptBullet() {
+    this.pho += this.dpho
+    this.theta += this.dtheta
+    const relTheta = this.ref.base.theta || 0
+    this.x = this.pho * Math.cos(relTheta + this.theta)
+    this.y = this.pho * Math.sin(relTheta + this.theta)
+  }
 }
 
-Bullet.relBullet = function(state, mutate, context) {
-  return new Bullet(state, function() {
-    this.x = this.src.x + this.dist * Math.cos(this.face)
-    this.y = this.src.y + this.dist * Math.sin(this.face)
-    this.dist += this.vdist
-    this.face += this.vface
-    if (mutate) mutate.call(this)
-  }, context)
+Bullet.defaultCallback = {
+  onLeaveCanvas(event) {
+    const index = this.bullets.findIndex(bullet => bullet.id === event.target.id)
+    if (index) this.bullets.splice(index, 1)
+  }
 }
 
 Bullet.ReboundOnBorder = function() {
