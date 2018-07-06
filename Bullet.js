@@ -1,6 +1,7 @@
 class Point {
   constructor(data) {
     Object.assign(this, data)
+    this.timeline = -1
   }
 
   get rel() {
@@ -21,11 +22,22 @@ class Point {
 
   draw() {
     if (!this.context) return
+    if (this.show === false) return
     this.context.beginPath()
     this.context.arc(this.xabs, this.yabs, this.radius, 0, Math.PI * 2)
     this.context.closePath()
     this.context.fillStyle = this.color
     this.context.fill()
+  }
+
+  update(time) {
+    if (this.mutate) this.mutate(time)
+    this.draw(time)
+    this.timeline = time
+  }
+
+  copy() {
+    return Object.assign({}, this)
   }
 }
 
@@ -64,12 +76,15 @@ class Self extends Point {
 class Bullet extends Point {
   constructor(mode, state, reference) {
     super(state)
-    this.timeline = 0
-    this.ref = reference
+    this.ref = {}
+    for (const key in reference) {
+      this.ref[key] = reference[key].copy()
+    }
     this.move = Bullet.defaultMotions[mode]
   }
 
   update(time) {
+    time -= this.birth || 0
     if (this.move) this.move(time)
     if (this.mutate) this.mutate(time)
     this.draw(time)

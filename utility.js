@@ -6,4 +6,21 @@ function rgb(red, green, blue) {
   return `rgb(${to256(red)},${to256(green)},${to256(blue)})`
 }
 
-module.exports = { rgb }
+function interval(period, previous, current) {
+  return Math.floor(current / period) > Math.floor(previous / period)
+}
+
+function smooth(x1, x2, t) {
+  return x1 + (x2 - x1) / 2 * (1 - Math.cos(Math.PI * t))
+}
+
+function rpm() {
+  return Math.floor(Math.random() * 2) * 2 - 1
+}
+
+module.exports = {
+  rgb,
+  interval,
+  smooth,
+  rpm
+}
