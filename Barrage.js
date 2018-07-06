@@ -1,20 +1,19 @@
 const { Point, Bullet } = require('./Bullet')
 
 class Barrage {
-  constructor({state, reference, context, mutate}) {
+  constructor({reference = {}, mutate, mounted}) {
     this.ref = {}
-    this._ctx_ = context
-    this.state = state || {}
-    this.mutate = mutate
+    this.prop = {}
     this.bullets = []
     this.timeline = -1
+    this.mutate = mutate
+    this.mounted = mounted
     for (const key in reference) {
       if (reference[key] instanceof Point) {
         this.ref[key] = reference[key]
       } else {
         this.ref[key] = new Point(reference[key])
       }
-      this.ref[key].context = context
     }
   }
 
@@ -29,26 +28,24 @@ class Barrage {
       mutate = () => {}
     }) => {
       const bullet = new Bullet(state, this.ref, events, listener)
+      Object.assign(bullet, this.prop)
       bullet.id = Math.random() * 1e10
       bullet.birth = time
       bullet.mutate = mutate
       bullet.parent = this
-      bullet.context = this._ctx_
+      bullet.context = this.context
       return bullet
     }))
     this.bullets.forEach(bullet => bullet.update(time))
     this.timeline = time
   }
 
-  get context() {
-    return this._ctx_
-  }
-
-  set context(val) {
-    this._ctx_ = val
+  setContext(context) {
+    this.context = context
     for (const key in this.ref) {
-      this.ref[key].context = val
+      this.ref[key].context = context
     }
+    if (this.mounted) this.mounted()
   }
 }
 

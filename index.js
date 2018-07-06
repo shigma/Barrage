@@ -41,7 +41,8 @@ new Vue({
   methods: {
     addBarrage(barrage) {
       barrage.id = Math.random() * 1e10
-      barrage.context = this.context
+      barrage.setContext(this.context)
+      barrage.ref.self = this.self
       this.barrages.push(barrage)
       return barrage.id
     },

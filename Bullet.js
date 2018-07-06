@@ -5,24 +5,24 @@ class Point {
     Object.assign(this, data)
     if (!data.x) this.x = 0
     if (!data.y) this.y = 0
+    if (!data.rel) this.rel = 'base'
+    if (!data.ref) this.ref = {}
     this.timeline = -1
     this.birth = 0
   }
-
-  get rel() {
-    return this.ref ? this.ref[this.relkey || 'base'] : undefined
-  }
-
+  
   get canvas() {
     return this.context ? this.context.canvas : undefined
   }
 
   get xabs() {
-    return this.x + (this.rel ? this.rel.x : 0)
+    const relative = this.ref[this.rel]
+    return this.x + (relative ? relative.x : 0)
   }
 
   get yabs() {
-    return this.y + (this.rel ? this.rel.y : 0)
+    const relative = this.ref[this.rel]
+    return this.y + (relative ? relative.y : 0)
   }
 
   draw() {
@@ -64,7 +64,7 @@ class Self extends Point {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
       (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
-    ) / (this.keyState.Shift ? 2 : 1 )
+    ) / (this.keyState.Shift ? 2 : 1)
 
     this.x += speed * this.keyState.ArrowRight
     this.x -= speed * this.keyState.ArrowLeft

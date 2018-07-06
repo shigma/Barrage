@@ -1,0 +1,58 @@
+const Utility = require('../utility')
+const Barrage = require('../Barrage')
+
+module.exports = new Barrage({
+  reference: {
+    base: {
+      x: 200,
+      y: 160,
+      radius: 20,
+      color: 'yellow',
+      mutate(time) {
+        if (Utility.interval(2000, this.timeline, time)) {
+          this.lastx = this.x
+          this.lasty = this.y
+          if (this.x < 160) {
+            this.nextx = this.x + Math.random() * 60 + 60
+          } else if (this.x > 240) {
+            this.nextx = this.x - Math.random() * 60 - 60
+          } else {
+            this.nextx = this.x + (Math.random() * 40 + 40) * Utility.rpm()
+          }
+          this.nexty = Math.random() * 40 + 140
+        } else if (time % 2000 > 1000) {
+          this.x = Utility.smooth(this.lastx, this.nextx, (time % 2000 - 1000) / 1000)
+          this.y = Utility.smooth(this.lasty, this.nexty, (time % 2000 - 1000) / 1000)
+        }
+      }
+    }
+  },
+
+  mounted() {
+    this.prop.dir = Utility.rpm()
+  },
+
+  mutate(time) {
+    if (Utility.interval(2000, this.timeline, time)) this.prop.dir *= -1
+    if (Utility.interval(160, this.timeline, time) && time % 2000 < 480) {
+      const result = []
+      for (let i = 1; i < 100; i++) {
+        result.push({
+          state: {
+            rel: 'self',
+            rho: 0,
+            theta:  Math.PI * (1 / 2 + i / 50),
+            radius: 6,
+            color: 'maroon'
+          },
+          mutate(time) {
+            this.rho += (1 + time / 500) * (time - this.timeline) / 20
+            this.theta -= Math.PI / 500 * this.dir * (time - this.timeline) / 20
+            this.polarLocate()
+          }
+        })
+      }
+      return result
+    }
+  }
+})
