@@ -1,11 +1,11 @@
 const { Point, Bullet } = require('./Bullet')
 
 class Barrage {
-  constructor({state, reference, context, emitter}) {
+  constructor({state, reference, context, mutate}) {
     this.ref = {}
     this._ctx_ = context
     this.state = state || {}
-    this.emitter = emitter
+    this.mutate = mutate
     this.bullets = []
     this.timeline = -1
     for (const key in reference) {
@@ -22,13 +22,17 @@ class Barrage {
     for (const key in this.ref) {
       this.ref[key].update(time)
     }
-    this.bullets.push(...(this.emitter(time) || []).map((data) => {
-      const bullet = new Bullet(data.mode, data.state, this.ref)
-      bullet.mutate = data.mutate
-      bullet.events = data.events || {}
-      bullet.birth = time
-      bullet.parent = this
+    this.bullets.push(...(this.mutate(time) || []).map(({
+      state = {},
+      events = {},
+      listener = {},
+      mutate = () => {}
+    }) => {
+      const bullet = new Bullet(state, this.ref, events, listener)
       bullet.id = Math.random() * 1e10
+      bullet.birth = time
+      bullet.mutate = mutate
+      bullet.parent = this
       bullet.context = this._ctx_
       return bullet
     }))

@@ -1,7 +1,12 @@
+const Events = require('events')
+
 class Point {
   constructor(data) {
     Object.assign(this, data)
+    if (!data.x) this.x = 0
+    if (!data.y) this.y = 0
     this.timeline = -1
+    this.birth = 0
   }
 
   get rel() {
@@ -31,21 +36,23 @@ class Point {
   }
 
   update(time) {
+    time -= this.birth
     if (this.mutate) this.mutate(time)
     this.draw(time)
     this.timeline = time
   }
 
   copy() {
-    return Object.assign({}, this)
+    const _this = this
+    return Object.assign(new Point(this), {
+      locate() {
+        return Object.assign(this, new Point(_this))
+      }
+    })
   }
 }
 
 class Self extends Point {
-  constructor(data) {
-    super(data)
-  }
-
   initialize(context) {
     if (context) this.context = context
     this.x = this.canvas.width / 2
@@ -73,68 +80,72 @@ class Self extends Point {
   }
 }
 
+class BulletEvent extends Events {
+  constructor(bullet, events) {
+    super()
+    for (const name in events) {
+      this.on(name, (...args) => {
+        if (events[name] instanceof Function) {
+          events[name].call(bullet, ...args)
+        }
+      })
+    }
+  }
+}
+
 class Bullet extends Point {
-  constructor(mode, state, reference) {
+  constructor(state, reference, events, listener) {
     super(state)
     this.ref = {}
     for (const key in reference) {
       this.ref[key] = reference[key].copy()
     }
-    this.move = Bullet.defaultMotions[mode]
+    const _events = Object.assign({}, Bullet.callback, events)
+    this.events = new BulletEvent(this, _events)
+    this.listener = Object.assign({}, Bullet.listener, listener)
   }
 
   update(time) {
-    time -= this.birth || 0
-    if (this.move) this.move(time)
-    if (this.mutate) this.mutate(time)
+    time -= this.birth
+    this.mutate(time)
     this.draw(time)
     this.listen(time)
+    this.timeline = time
   }
 
   listen(time) {
-    for (const name of Bullet.eventList) {
-      const event = this['has' + name](time)
-      if (event.result) {
-        event.target = this
-        if (this.events.onLeaveCanvas instanceof Function) {
-          this.events['on' + name].call(this.parent, event)
-        } else if (this.events.onLeaveCanvas !== 'none') {
-          Bullet.defaultCallback['on' + name].call(this.parent, event)
-        }
-      }
+    for (const name in this.listener) {
+      const result = this.listener[name].call(this, time)
+      if (result) this.events.emit(name, result)
     }
   }
-  
-  hasLeaveCanvas() {
+
+  polarLocate() {
+    const relTheta = this.ref.base.theta || 0
+    this.x = this.rho * Math.cos(relTheta + this.theta)
+    this.y = this.rho * Math.sin(relTheta + this.theta)
+  }
+}
+
+Bullet.callback = {
+  leave() {
+    const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)
+    if (index) this.parent.bullets.splice(index, 1)
+  }
+}
+
+Bullet.listener = {
+  border() {
     const top = this.yabs < 0
     const left = this.xabs < 0
     const right = this.xabs > this.canvas.width
     const bottom = this.yabs > this.canvas.height
-    const result = top || left || right || bottom
-    return { top, left, right, bottom, result }
-  }
-}
-
-Bullet.eventList = [ 'LeaveCanvas' ]
-
-Bullet.defaultMotions = {
-  xyBullet() {
-    this.x += this.vpho * Math.cos(this.vtheta)
-    this.y += this.vpho * Math.sin(this.vtheta)
+    if (top || left || right || bottom) {
+      return { top, left, right, bottom }
+    }
   },
-  ptBullet() {
-    this.pho += this.dpho
-    this.theta += this.dtheta
-    const relTheta = this.ref.base.theta || 0
-    this.x = this.pho * Math.cos(relTheta + this.theta)
-    this.y = this.pho * Math.sin(relTheta + this.theta)
-  }
-}
-
-Bullet.defaultCallback = {
-  onLeaveCanvas(event) {
-    const index = this.bullets.findIndex(bullet => bullet.id === event.target.id)
-    if (index) this.bullets.splice(index, 1)
+  leave() {
+    return this.x * this.x + this.y * this.y > 1e6
   }
 }
 

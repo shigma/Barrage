@@ -17,7 +17,6 @@ new Vue({
     }
     return {
       filename: '',
-      barrages: [],
       active: null,
       stopTime: 0,
       lastTime: 0,
@@ -33,6 +32,7 @@ new Vue({
   },
 
   mounted() {
+    this.barrages = []
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
     this.self.initialize(this.context)

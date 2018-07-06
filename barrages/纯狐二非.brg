@@ -32,25 +32,23 @@ module.exports = new Barrage({
     dir: Utility.rpm()
   },
 
-  emitter(time) {
-    if (Utility.interval(2000, this.timeline, time)) {
-      this.state.dir *= -1
-    }
+  mutate(time) {
+    if (Utility.interval(2000, this.timeline, time)) this.state.dir *= -1
     if (Utility.interval(160, this.timeline, time) && time % 2000 < 480) {
       const result = []
       for (let i = 1; i < 100; i++) {
         result.push({
-          mode: 'ptBullet',
           state: {
+            rho: 0,
+            theta:  Math.PI * (1 / 2 + i / 50),
             radius: 6,
             color: 'maroon',
-            pho: 0,
-            dpho: 2,
-            theta: Math.PI * (1 / 2 + i / 50),
-            dtheta: -Math.PI / 500 * this.state.dir
+            dir: this.state.dir
           },
           mutate(time) {
-            this.dpho = 2 * (1 + time / 1000)
+            this.rho += (1 + time / 500) * (time - this.timeline) / 20
+            this.theta -= Math.PI / 500 * this.dir * (time - this.timeline) / 20
+            this.polarLocate()
           }
         })
       }
