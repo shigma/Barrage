@@ -35,9 +35,9 @@ class UpdateObject {
     // Interval
     this.interval.forEach(({args, birth}) => {
       const maxTime = args.length > 2 ? args[1] * args[0] : Infinity
-      const period = args.length > 3 ? this.timestamp % args[2] : this.timestamp
+      const period = args.length > 3 ? (this.timestamp - birth) % args[2] : this.timestamp - birth
       const start = args.length > 4 ? args[3] : 0
-      const getAge = stamp => Math.floor(stamp / args[0])
+      const getAge = stamp => Math.floor((stamp - birth) / args[0])
       if (getAge(this.timestamp) > getAge(this.timeline) && start + period < maxTime) {
         return args[args.length - 1](this.timestamp)
       }
