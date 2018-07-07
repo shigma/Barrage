@@ -30,7 +30,7 @@ module.exports = new Barrage({
   mounted() {
     this.setTimeout(2000, () => {
       this.setInterval(900, () => {
-        const clr = Utility.rgb(Math.random() * 0.7, Math.random() * 0.7, Math.random() * 0.7)
+        const clr = Utility.rgb(Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3)
         this.emitBullets(17, (index) => ({
           state: {
             radius: 18,
@@ -52,7 +52,7 @@ module.exports = new Barrage({
       this.emitBullets(1, Math.floor(Math.random() * 3 + 1), () => ({
         state: {
           radius: Math.random() * 4 + 6,
-          color: Utility.rgb(Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8),
+          color: Utility.rgb(Math.random() * 0.8 + 0.2, Math.random() * 0.8 + 0.2, Math.random() * 0.8 + 0.2),
           x: 0,
           raw_y: Math.random() * 100 * Utility.rpm(),
           gy: Math.random() * 160 + 80
