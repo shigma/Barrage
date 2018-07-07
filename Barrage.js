@@ -1,13 +1,12 @@
-const { Point, Bullet } = require('./Bullet')
+const { UpdateObject, Point, Bullet } = require('./Bullet')
 
-class Barrage {
-  constructor({reference = {}, mutate, mounted}) {
+class Barrage extends UpdateObject {
+  constructor({reference = {}, mutate, mounted, events = {}, listener = {}}) {
+    super({ mutate, mounted }, {
+      events: Object.assign({}, Barrage.callback, events),
+      listener: Object.assign({}, Barrage.listener, listener)
+    })
     this._ref = {}
-    this.prop = {}
-    this.bullets = []
-    this.timeline = -1
-    this.mutate = mutate
-    this.mounted = mounted
     for (const key in reference) {
       if (reference[key] instanceof Point) {
         this._ref[key] = reference[key]
@@ -15,21 +14,19 @@ class Barrage {
         this._ref[key] = new Point(reference[key])
       }
     }
+    this.prop = {}
+    this.bullets = []
     this.ref = this._ref
+    this.setNextTick((time) => {
+      for (const key in this._ref) {
+        this._ref[key].update(time)
+      }
+      return true
+    })
   }
 
-  update(time) {
-    if (!this.birth) this.birth = time
-    time -= this.birth
-    this.timestamp = time
-    for (const key in this._ref) {
-      this._ref[key].update(time)
-    }
-    for (const item of (this.mutate(time) || [])) {
-      this.pushBullet(item)
-    }
+  display(time) {
     this.bullets.forEach(bullet => bullet.update(time))
-    this.timeline = time
   }
 
   setContext(context) {
@@ -51,17 +48,8 @@ class Barrage {
     bullet.mutate = item.mutate
     bullet.context = this.context
     bullet.birth = this.timestamp
+    if (item.mounted) item.mounted.call(bullet)
     this.bullets.push(bullet)
-  }
-
-  setInterval(interval, ...args) {
-    const maxTime = args.length > 1 ? args[0] * interval : Infinity
-    const period = args.length > 2 ? this.timestamp % args[1] : this.timestamp
-    const start = args.length > 3 ? args[2] : 0
-    const getAge = stamp => Math.floor(stamp / interval)
-    if (getAge(this.timestamp) > getAge(this.timeline) && start + period < maxTime) {
-      return args[args.length - 1](this.timestamp)
-    }
   }
 
   emitBullets(...args) {
@@ -78,5 +66,9 @@ class Barrage {
     }
   }
 }
+
+Barrage.callback = {}
+
+Barrage.listener = {}
 
 module.exports = Barrage

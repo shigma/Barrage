@@ -1,18 +1,98 @@
 const Events = require('events')
 
-class Point {
-  constructor(data) {
-    Object.assign(this, data)
-    if (!data.x) this.x = 0
-    if (!data.y) this.y = 0
-    if (!data.rel) this.rel = 'base'
-    if (!data.ref) this.ref = {}
+class UpdateObject {
+  constructor(self, {events = {}, listener = {}} = {}) {
+    Object.assign(this, self)
+    this.events = new Events()
+    this.listener = listener
+    this.nextTick = []
+    this.interval = []
     this.timeline = -1
-    this.birth = 0
+    this.timestamp = 0
+    for (const name in events) {
+      this.events.on(name, (result) => {
+        if (events[name] instanceof Function) {
+          events[name].call(this, result)
+        }
+      })
+    }
   }
 
-  get canvas() {
-    return this.context ? this.context.canvas : undefined
+  update(time) {
+    if (!this.birth) this.birth = time
+    time -= this.birth
+    this.timestamp = time
+
+    // nextTick
+    this.nextTick.forEach(({id, func}) => {
+      const result = func.call(this, time)
+      if (!result) {
+        const index = this.nextTick.findIndex(item => item.id === id)
+        if (index) this.nextTick.splice(index, 1)
+      }
+    })
+
+    // Interval
+    this.interval.forEach(({args, birth}) => {
+      const maxTime = args.length > 2 ? args[1] * args[0] : Infinity
+      const period = args.length > 3 ? this.timestamp % args[2] : this.timestamp
+      const start = args.length > 4 ? args[3] : 0
+      const getAge = stamp => Math.floor(stamp / args[0])
+      if (getAge(this.timestamp) > getAge(this.timeline) && start + period < maxTime) {
+        return args[args.length - 1](this.timestamp)
+      }
+    })
+
+    // Mutate
+    if (this.mutate) this.mutate(time)
+
+    // Listen
+    for (const name in this.listener) {
+      const result = this.listener[name].call(this, time)
+      if (result) this.events.emit(name, result)
+    }
+
+    // Display
+    if (this.display) this.display(time)
+    this.timeline = time
+  }
+
+  // API
+  setNextTick(func) {
+    const id = Math.random() * 1e10
+    this.nextTick.push({ id, func })
+  }
+
+  setInterval(...args) {
+    const id = Math.random() * 1e10
+    const birth = this.timestamp
+    this.interval.push({ id, args, birth })
+    return id
+  }
+
+  removeInterval(id) {
+    const index = this.interval.findIndex(item => item.id === id)
+    if (index) this.interval.splice(index, 1)
+  }
+
+  setTimeout(time, callback) {
+    this.setNextTick(() => {
+      if (this.timeline < time && this.timestamp >= time) {
+        callback.call(this, time)
+      } else {
+        return true
+      }
+    })
+  }
+}
+
+class Point extends UpdateObject {
+  constructor(...args) {
+    super(...args)
+    if (!this.x) this.x = 0
+    if (!this.y) this.y = 0
+    if (!this.rel) this.rel = 'base'
+    if (!this.ref) this.ref = {}
   }
 
   get xabs() {
@@ -32,7 +112,7 @@ class Point {
     this.rel = rel
   }
 
-  draw() {
+  display() {
     if (!this.context) return
     if (this.show === false) return
     this.context.beginPath()
@@ -42,18 +122,8 @@ class Point {
     this.context.fill()
   }
 
-  distance(point) {
-    const x = point.xabs || point.x
-    const y = point.yabs || point.y
-    return Math.sqrt((this.xabs - x) ^ 2 + (this.yabs - y) ^ 2)
-  }
-
-  update(time) {
-    time -= this.birth
-    this.timestamp = time
-    if (this.mutate) this.mutate(time)
-    this.draw(time)
-    this.timeline = time
+  getDistance(point) {
+    return Math.sqrt((this.xabs - point.xabs) ** 2 + (this.yabs - point.yabs) ** 2)
   }
 
   copy() {
@@ -68,12 +138,12 @@ class Point {
 class Self extends Point {
   initialize(context) {
     if (context) this.context = context
-    this.x = this.canvas.width / 2
-    this.y = this.canvas.height / 8 * 7
-    this.draw()
+    this.x = this.context.canvas.width / 2
+    this.y = this.context.canvas.height / 8 * 7
+    this.display()
   }
 
-  update() {
+  mutate() {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
       (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
@@ -86,48 +156,21 @@ class Self extends Point {
     
     if (this.x < 0) this.x = 0
     if (this.y < 0) this.y = 0
-    if (this.x > this.canvas.width) this.x = this.canvas.width
-    if (this.y > this.canvas.height) this.y = this.canvas.height
-
-    this.draw()
-  }
-}
-
-class BulletEvent extends Events {
-  constructor(bullet, events) {
-    super()
-    for (const name in events) {
-      this.on(name, (...args) => {
-        if (events[name] instanceof Function) {
-          events[name].call(bullet, ...args)
-        }
-      })
-    }
+    if (this.x > this.context.canvas.width) this.x = this.context.canvas.width
+    if (this.y > this.context.canvas.height) this.y = this.context.canvas.height
   }
 }
 
 class Bullet extends Point {
   constructor(state, reference, events, listener) {
-    super(state)
+    super(state, {
+      events: Object.assign({}, Bullet.callback, events),
+      listener: Object.assign({}, Bullet.listener, listener)
+    })
     this.ref = {}
     for (const key in reference) {
       this.ref[key] = reference[key].copy()
     }
-    const _events = Object.assign({}, Bullet.callback, events)
-    this.events = new BulletEvent(this, _events)
-    this.listener = Object.assign({}, Bullet.listener, listener)
-  }
-
-  update(time) {
-    time -= this.birth
-    this.timestamp = time
-    this.mutate(time)
-    this.draw(time)
-    for (const name in this.listener) {
-      const result = this.listener[name].call(this, time)
-      if (result) this.events.emit(name, result)
-    }
-    this.timeline = time
   }
 
   polarLocate() {
@@ -187,8 +230,8 @@ Bullet.listener = {
   border() {
     const top = this.yabs < 0
     const left = this.xabs < 0
-    const right = this.xabs > this.canvas.width
-    const bottom = this.yabs > this.canvas.height
+    const right = this.xabs > this.context.canvas.width
+    const bottom = this.yabs > this.context.canvas.height
     if (top || left || right || bottom) {
       return { top, left, right, bottom }
     }
@@ -205,4 +248,4 @@ Bullet.ReboundOnBorder = function() {
   if (x > this.context.canvas.width || x < 0) this.t = Math.PI - this.t
 }
 
-module.exports = { Point, Bullet, Self }
+module.exports = { UpdateObject, Point, Bullet, Self }

@@ -16,6 +16,7 @@ new Vue({
       Shift: false
     }
     return {
+      frametime: 0,
       filename: '',
       active: null,
       stopTime: 0,
@@ -54,10 +55,13 @@ new Vue({
     },
     display(timestamp) {
       //this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-      this.context.fillStyle = this.backgroundcolor
-      this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-      this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
-      this.self.update()
+      if (timestamp - this.frametime > 40) {
+        this.context.fillStyle = this.backgroundcolor
+        this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+        this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
+        this.self.update()
+        this.frametime = timestamp
+      }
       this.active = requestAnimationFrame(this.display)
     },
     toggle() {
