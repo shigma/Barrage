@@ -4,6 +4,8 @@ Vue.config.productionTip = false
 
 const { Self } = require('./Bullet')
 
+const MinFrame = 10
+
 new Vue({
   el: '#app',
 
@@ -16,7 +18,8 @@ new Vue({
       Shift: false
     }
     return {
-      frametime: 0,
+      frameTime: 0,
+      frameCount: 0,
       filename: '',
       active: null,
       stopTime: 0,
@@ -30,6 +33,16 @@ new Vue({
         color: 'grey',
         keyState
       })
+    }
+  },
+
+  computed: {
+    frameRate() {
+      if (this.frameCount) {
+        return Math.round(1000 / (this.frameTime - this.stopTime) * this.frameCount)
+      } else {
+        return Math.round(1000 / MinFrame)
+      }
     }
   },
 
@@ -54,13 +67,13 @@ new Vue({
       return barrage.id
     },
     display(timestamp) {
-      //this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-      if (timestamp - this.frametime > 40) {
+      if (timestamp - this.frameTime > MinFrame) {
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
         this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
         this.self.update()
-        this.frametime = timestamp
+        this.frameCount += 1
+        this.frameTime = timestamp
       }
       this.active = requestAnimationFrame(this.display)
     },
@@ -113,7 +126,8 @@ new Vue({
         <div>Load</div>
       </button>
       <p>{{ filename || 'No file loaded.' }}</p>
-      <p>{{self.hp||0}}</p>
+      <p>Hp: {{ self.hp || 0 }}</p>
+      <p>Fps: {{ frameRate }}</p>
     </div>
   </div>`
 })
