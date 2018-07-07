@@ -23,7 +23,7 @@ module.exports = new Barrage({
 
   mounted(time) {
     this.setInterval(200, () => {
-      var clr = Utility.rgb(Math.random() * 0.7, Math.random() * 0.7, Math.random() * 0.7)
+      var clr = Utility.rgb(Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3)
       var num = 17
       var delta = Math.random() * Math.PI
       this.emitBullets(num,(index) => ({
