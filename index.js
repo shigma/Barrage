@@ -21,11 +21,12 @@ new Vue({
       stopTime: 0,
       lastTime: 0,
       self: new Self({
+        hp: 1000,
         x: 0,
         y: 0,
         v: 6,
         radius: 6,
-        color: 'black',
+        color: 'grey',
         keyState
       })
     }
@@ -33,8 +34,11 @@ new Vue({
 
   mounted() {
     this.barrages = []
+    this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
+    this.context.fillStyle = this.backgroundcolor
+    this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
     this.self.initialize(this.context)
     addEventListener('keydown', event => this.self.keyState[event.key] = true)
     addEventListener('keyup', event => this.self.keyState[event.key] = false)
@@ -49,7 +53,9 @@ new Vue({
       return barrage.id
     },
     display(timestamp) {
-      this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      //this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      this.context.fillStyle = this.backgroundcolor
+      this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
       this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
       this.self.update()
       this.active = requestAnimationFrame(this.display)
@@ -103,6 +109,7 @@ new Vue({
         <div>Load</div>
       </button>
       <p>{{ filename || 'No file loaded.' }}</p>
+      <p>{{self.hp||0}}</p>
     </div>
   </div>`
 })

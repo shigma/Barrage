@@ -160,6 +160,11 @@ class Bullet extends Point {
 }
 
 Bullet.callback = {
+  collideSelf(event){
+    this.ref.self.locate().hp = Math.min(event.dist, this.ref.self.locate().hp)
+    if(event.result)this.parent.ref.self.hp --
+    //console.log(this.ref.self.locate().hp)
+  },
   leave() {
     const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)
     if (index) this.parent.bullets.splice(index, 1)
@@ -167,6 +172,14 @@ Bullet.callback = {
 }
 
 Bullet.listener = {
+  collideSelf(){
+    const self = this.parent.ref.self
+    const dist = Math.sqrt((this.xabs - self.x) * (this.xabs - self.x) + 
+                           (this.yabs - self.y) * (this.yabs - self.y)
+    )
+    const result = (dist < (this.radius + self.radius) )
+    return { dist, result }
+  },
   border() {
     const top = this.yabs < 0
     const left = this.xabs < 0
