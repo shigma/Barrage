@@ -6,16 +6,20 @@ const Barrage = require("../Barrage")
 module.exports = new Barrage({
     reference: {
         base: {
-            x: 200,
-            y: 160,
-            radius: 15,
-            color: "maroon"
+            state: {
+                x: 200,
+                y: 160,
+                radius: 15,
+                color: "maroon"
+            }
         },
         base2: {
-            x: 90,
-            y: 240,
-            radius: 10,
-            color: "#6cf066",
+            state: {
+                x: 90,
+                y: 240,
+                radius: 10,
+                color: "#6cf066",
+            },
             mutate(time) {
                 if (Utility.interval(6000, this.timeline, time)) {
                     this.lastx = this.x
@@ -35,7 +39,7 @@ module.exports = new Barrage({
             this.emitBullets(10, (index) => ({
                 state: {
                     rho: 0,
-                    theta: Math.PI / 5 * (index + 3 * Math.sin(2 * Math.PI / 10000 * (time % 12000))),
+                    theta: (index + 3 * Math.sin(2 * Math.PI / 10000 * (time % 12000))) / 5,
                     radius: 6,
                     color: "#1b2fe9"
                 },
@@ -53,7 +57,7 @@ module.exports = new Barrage({
                 state: {
                     rel: "base2",
                     rho: 0,
-                    theta: Math.PI / 7 * index,
+                    theta: index / 7,
                     radius: 20,
                     color: wave == 0 ? Utility.rgb(0.1, 0.75, 0.8) : wave == 1 ? Utility.rgb(0.75, 0.8, 0.1) : Utility.rgb(0.8, 0.1, 0.75)
                 },
