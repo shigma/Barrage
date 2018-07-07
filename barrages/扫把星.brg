@@ -1,0 +1,51 @@
+const Utility = require('../utility')
+const Barrage = require('../Barrage')
+
+module.exports = new Barrage({
+  reference: {
+    base: {
+      x: 200,
+      y: 160,
+      radius: 20,
+      color: 'yellow',
+      face: Math.PI / 180 * 65,
+      mutate(time) {
+        this.x += 10 * Math.cos(this.face)
+        this.y += 10 * Math.sin(this.face)
+        if (this.x > 380 || this.x < 20){
+          this.face = Math.PI - this.face
+        }else if (this.y > 580 || this.y < 20){
+          this.face = - this.face
+        }
+      }
+    }
+  },
+
+  mutate(time) {
+    //if (Utility.interval(500, this.timeline, time)) {
+    this.setInterval(500, () => {
+      var clr = Utility.rgb(Math.random() * 0.7, Math.random() * 0.7, Math.random() * 0.7)
+      var num = 23
+      this.emitBullets(num,(index) => ({
+        state: {
+          radius: 5,
+          color: clr,
+          rho: 0,
+          theta: Math.PI * (1 / 2 + 2 / num * index),
+          createTime: time,
+          v:5
+        },
+        mutate(time) {
+          if (time < 2000) {
+            this.rho += this.v - time / 1000 * this.v
+          }else if (time < 2500) {
+            this.rho -= time / 1000 * this.v / 2
+          }else {
+            this.rho += this.v
+          }
+          this.polarLocate()
+        }
+      }))
+    })
+  }
+})
