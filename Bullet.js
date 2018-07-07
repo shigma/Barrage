@@ -126,6 +126,34 @@ class Point extends UpdateObject {
     this.context.fill()
   }
 
+  polarLocate() {
+    const relTheta = this.ref.base ? (this.ref.base.theta || 0) : 0
+    this.x = this.rho * Math.cos(Math.PI * (relTheta + this.theta))
+    this.y = this.rho * Math.sin(Math.PI * (relTheta + this.theta))
+  }
+
+  movePolar(rho, theta) {
+    this.x += rho * Math.cos(Math.PI * theta)
+    this.y += rho * Math.sin(Math.PI * theta)
+  }
+
+  getTheta(point) {
+    if (point.x === this.xabs) {
+      if (point.y >= this.yabs) {
+        return 0.5
+      } else {
+        return -0.5
+      }
+    } else {
+      const result = Math.atan((point.y - this.yabs) / (point.x - this.xabs)) / Math.PI
+      if (point.x > this.xabs) {
+        return result
+      } else {
+        return 1 + result
+      }
+    }
+  }
+  
   getDistance(point) {
     return Math.sqrt((this.xabs - point.xabs) ** 2 + (this.yabs - point.yabs) ** 2)
   }
@@ -183,34 +211,6 @@ class Bullet extends Point {
       this.ref[key] = reference[key].copy()
     }
   }
-
-  polarLocate() {
-    const relTheta = this.ref.base ? (this.ref.base.theta || 0) : 0
-    this.x = this.rho * Math.cos(relTheta + this.theta)
-    this.y = this.rho * Math.sin(relTheta + this.theta)
-  }
-
-  movePolar(rho, theta) {
-    this.x += rho * Math.cos(theta)
-    this.y += rho * Math.sin(theta)
-  }
-
-  getTheta(point) {
-    if (point.x === this.xabs) {
-      if (point.y >= this.yabs) {
-        return Math.PI / 2
-      } else {
-        return -Math.PI / 2
-      }
-    } else {
-      const result = Math.atan((point.y - this.yabs) / (point.x - this.xabs))
-      if (point.x > this.xabs) {
-        return result
-      } else {
-        return Math.PI + result
-      }
-    }
-  }
 }
 
 Bullet.callback = {
@@ -250,13 +250,6 @@ Bullet.listener = {
   leave() {
     return this.x * this.x + this.y * this.y > 1e6
   }
-}
-
-Bullet.ReboundOnBorder = function() {
-  const x = this.x + this.v * Math.cos(this.t)
-  const y = this.y += this.v * Math.sin(this.t)
-  if (y > this.context.canvas.height || y < 0) this.t = -this.t
-  if (x > this.context.canvas.width || x < 0) this.t = Math.PI - this.t
 }
 
 module.exports = { UpdateObject, Point, Bullet, Self }

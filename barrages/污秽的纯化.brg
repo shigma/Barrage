@@ -7,7 +7,7 @@ module.exports = new Barrage({
       this.emitBullets(20, (index) => ({
         state: {
           rel: 'self',
-          theta: Math.PI * index / 10,
+          theta: index / 10,
           radius: 6,
           color: 'red'
         },
@@ -26,7 +26,7 @@ module.exports = new Barrage({
       this.emitBullets(10, (index) => ({
         state: {
           rel: 'self',
-          theta: Math.PI * (1 / 10 + index / 5),
+          theta: 1 / 10 + index / 5,
           radius: 6,
           color: 'blue'
         },

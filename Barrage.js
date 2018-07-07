@@ -11,7 +11,12 @@ class Barrage extends UpdateObject {
       if (reference[key] instanceof Point) {
         this._ref[key] = reference[key]
       } else {
-        this._ref[key] = new Point(reference[key])
+        const point = new Point(reference[key].state || {})
+        point.mutate = reference[key].mutate
+        if (reference[key].mounted) {
+          reference[key].mounted.call(point)
+        }
+        this._ref[key] = point
       }
     }
     this.prop = {}

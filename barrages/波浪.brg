@@ -6,10 +6,12 @@ const Barrage = require("../Barrage")
 module.exports = new Barrage({
   reference: {
     base: {
-      x: 200,
-      y: 160,
-      radius: 15,
-      color: "yellow"
+      state: {
+        x: 200,
+        y: 160,
+        radius: 15,
+        color: "yellow"
+      }
     }
   },
 
@@ -18,7 +20,7 @@ module.exports = new Barrage({
       this.emitBullets(8, (index) => ({
         state: {
           rho: 0,
-          theta: Math.PI / 4 * (index + Math.sin(2 * Math.PI / 10000 * (time % 14000 - 1000))),
+          theta: (index + Math.sin(2 * Math.PI / 10000 * (time % 14000 - 1000))) / 4,
           radius: 6,
           color: "#a72fdf"
         },
