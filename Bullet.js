@@ -201,15 +201,42 @@ class Self extends Point {
 }
 
 class Bullet extends Point {
-  constructor(state, reference, events, listener) {
+  constructor(state, reference, events, listener, display) {
     super(state, {
       events: Object.assign({}, Bullet.callback, events),
       listener: Object.assign({}, Bullet.listener, listener)
     })
+    this.show = true
     this.ref = {}
     for (const key in reference) {
       this.ref[key] = reference[key].copy()
     }
+
+    if (display instanceof Function) {
+      this.display = function(...args) {
+        if (this.show) display.call(this, ...args)
+      }
+    } else if (this.style in Bullet.styles) {
+      this.display = function(...args) {
+        if (this.show) Bullet.styles[this.style].call(this, ...args)
+      }
+    }
+  }
+}
+
+Bullet.styles = {
+  border() {
+    this.context.beginPath()
+    this.context.arc(this.xabs, this.yabs, this.radius, 0, Math.PI * 2)
+    this.context.closePath()
+    const gradient = this.context.createRadialGradient(
+      this.xabs, this.yabs, this.radius - this.thickness,
+      this.xabs, this.yabs, this.radius
+    )
+    gradient.addColorStop(0, this.color)
+    gradient.addColorStop(1, this.bdColor)
+    this.context.fillStyle = gradient
+    this.context.fill()
   }
 }
 
@@ -221,7 +248,6 @@ Bullet.callback = {
       const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)
       if (index) this.parent.bullets.splice(index, 1)
     }
-    //console.log(this.ref.self.locate().hp)
   },
   leave() {
     const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)

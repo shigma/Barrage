@@ -46,7 +46,7 @@ class Barrage extends UpdateObject {
     const state = item.state || {}
     const events = item.events || {}
     const listener = item.listener || {}
-    const bullet = new Bullet(state, this.ref, events, listener)
+    const bullet = new Bullet(state, this.ref, events, listener, item.display)
     Object.assign(bullet, this.prop)
     bullet.id = Math.random() * 1e10
     bullet.parent = this

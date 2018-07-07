@@ -42,7 +42,10 @@ module.exports = new Barrage({
           rho: 0,
           theta:  1 / 2 + index / 50,
           radius: 6,
-          color: 'maroon'
+          color: 'white',
+          style: 'border',
+          bdColor: 'maroon',
+          thickness: 4
         },
         mutate(time, delta) {
           this.rho += (1 + time / 500) * delta / 20
