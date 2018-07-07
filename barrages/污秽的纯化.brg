@@ -21,7 +21,6 @@ module.exports = new Barrage({
               if (this.timeline < 2000) {
                 this.theta = this.getTheta(this.ref.self.locate())
               }
-              this.pho = 2
               this.movePolar(2 * (time - 2000) / 2000, this.theta)
             }
           }
@@ -43,7 +42,7 @@ module.exports = new Barrage({
               if (this.timeline < 2000) {
                 this.theta = this.getTheta(this.ref.self.locate())
               }
-              this.movePolar(2 * (time - 2000) / 2000, this.theta)
+              this.movePolar(2.4 * (time - 2000) / 2000, this.theta)
             }
           }
         })

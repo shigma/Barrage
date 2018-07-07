@@ -23,7 +23,7 @@ new Vue({
       self: new Self({
         x: 0,
         y: 0,
-        v: 8,
+        v: 6,
         radius: 6,
         color: 'black',
         keyState
@@ -36,6 +36,8 @@ new Vue({
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
     this.self.initialize(this.context)
+    addEventListener('keydown', event => this.self.keyState[event.key] = true)
+    addEventListener('keyup', event => this.self.keyState[event.key] = false)
   },
 
   methods: {
@@ -91,9 +93,7 @@ new Vue({
     }
   },
 
-  template: `<div class="main"
-    @keydown="self.keyState[$event.key] = true"
-    @keyup="self.keyState[$event.key] = false">
+  template: `<div class="main">
     <canvas class="left" ref="canvas" width="400" height="600"/>
     <div class="right" align="center" ref="div">
       <button @click="toggle">

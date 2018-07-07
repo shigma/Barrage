@@ -42,8 +42,15 @@ class Point {
     this.context.fill()
   }
 
+  distance(point) {
+    const x = point.xabs || point.x
+    const y = point.yabs || point.y
+    return Math.sqrt((this.xabs - x) ^ 2 + (this.yabs - y) ^ 2)
+  }
+
   update(time) {
     time -= this.birth
+    this.timestamp = time
     if (this.mutate) this.mutate(time)
     this.draw(time)
     this.timeline = time
@@ -52,11 +59,7 @@ class Point {
   copy() {
     const _this = this
     function locate() {
-      return Object.assign({}, {
-        x: _this.x,
-        y: _this.y,
-        locate
-      })
+      return Object.assign({}, _this, {locate})
     }
     return locate()
   }
@@ -74,7 +77,7 @@ class Self extends Point {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
       (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
-    ) / (this.keyState.Shift ? 2 : 1)
+    ) / (this.keyState.Shift ? 4 : 1)
 
     this.x += speed * this.keyState.ArrowRight
     this.x -= speed * this.keyState.ArrowLeft
@@ -117,6 +120,7 @@ class Bullet extends Point {
 
   update(time) {
     time -= this.birth
+    this.timestamp = time
     this.mutate(time)
     this.draw(time)
     for (const name in this.listener) {

@@ -28,31 +28,26 @@ module.exports = new Barrage({
     }
   },
 
-  state: {
-    dir: Utility.rpm()
+  mounted() {
+    this.prop.dir = Utility.rpm()
   },
 
-  mutate(time) {
-    if (Utility.interval(2000, this.timeline, time)) this.state.dir *= -1
-    if (Utility.interval(160, this.timeline, time) && time % 2000 < 480) {
-      const result = []
-      for (let i = 1; i < 100; i++) {
-        result.push({
-          state: {
-            rho: 0,
-            theta:  Math.PI * (1 / 2 + i / 50),
-            radius: 6,
-            color: 'maroon',
-            dir: this.state.dir
-          },
-          mutate(time) {
-            this.rho += (1 + time / 500) * (time - this.timeline) / 20
-            this.theta -= Math.PI / 500 * this.dir * (time - this.timeline) / 20
-            this.polarLocate()
-          }
-        })
-      }
-      return result
-    }
+  mutate() {
+    this.setInterval(2000, () => this.prop.dir *= -1)
+    this.setInterval(160, 3, 2000, () => {
+      this.emitBullets(1, 100, (index) => ({
+        state: {
+          rho: 0,
+          theta:  Math.PI * (1 / 2 + index / 50),
+          radius: 6,
+          color: 'maroon'
+        },
+        mutate(time) {
+          this.rho += (1 + time / 500) * (time - this.timeline) / 20
+          this.theta -= Math.PI / 500 * this.dir * (time - this.timeline) / 20
+          this.polarLocate()
+        }
+      }))
+    })
   }
 })
