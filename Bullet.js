@@ -22,10 +22,11 @@ class UpdateObject {
     if (!this.birth) this.birth = time
     time -= this.birth
     this.timestamp = time
+    const delta = time - this.timeline
 
     // nextTick
     this.nextTick.forEach(({id, func}) => {
-      const result = func.call(this, time)
+      const result = func.call(this, time, delta)
       if (!result) {
         const index = this.nextTick.findIndex(item => item.id === id)
         if (index) this.nextTick.splice(index, 1)
@@ -34,26 +35,29 @@ class UpdateObject {
 
     // Interval
     this.interval.forEach(({args, birth}) => {
+      const time = this.timestamp - birth
       const maxTime = args.length > 2 ? args[1] * args[0] : Infinity
-      const period = args.length > 3 ? (this.timestamp - birth) % args[2] : this.timestamp - birth
+      const period = args.length > 3 ? time % args[2] : time
       const start = args.length > 4 ? args[3] : 0
       const getAge = stamp => Math.floor((stamp - birth) / args[0])
-      if (getAge(this.timestamp) > getAge(this.timeline) && start + period < maxTime) {
-        return args[args.length - 1](this.timestamp)
+      if (getAge(time) > getAge(this.timeline - birth) && period - start < maxTime) {
+        const iWave = Math.floor((period - start) / args[0])
+        const pWave = args.length > 3 ? Math.floor(time / args[2]) : 0
+        return args[args.length - 1](time, delta, iWave, pWave)
       }
     })
 
     // Mutate
-    if (this.mutate) this.mutate(time)
+    if (this.mutate) this.mutate(time, delta)
 
     // Listen
     for (const name in this.listener) {
-      const result = this.listener[name].call(this, time)
+      const result = this.listener[name].call(this, time, delta)
       if (result) this.events.emit(name, result)
     }
 
     // Display
-    if (this.display) this.display(time)
+    if (this.display) this.display(time, delta)
     this.timeline = time
   }
 
@@ -140,6 +144,13 @@ class Self extends Point {
     if (context) this.context = context
     this.x = this.context.canvas.width / 2
     this.y = this.context.canvas.height / 8 * 7
+    this.keyState = {
+      ArrowLeft: false,
+      ArrowDown: false,
+      ArrowRight: false,
+      ArrowUp: false,
+      Shift: false
+    }
     this.display()
   }
 

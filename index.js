@@ -10,13 +10,6 @@ new Vue({
   el: '#app',
 
   data() {
-    const keyState = {
-      ArrowLeft: false,
-      ArrowDown: false,
-      ArrowRight: false,
-      ArrowUp: false,
-      Shift: false
-    }
     return {
       frameTime: 0,
       frameCount: 0,
@@ -30,8 +23,7 @@ new Vue({
         y: 0,
         v: 6,
         radius: 6,
-        color: 'grey',
-        keyState
+        color: 'grey'
       })
     }
   },

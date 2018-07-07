@@ -39,9 +39,9 @@ module.exports = new Barrage({
           radius: 6,
           color: 'maroon'
         },
-        mutate(time) {
-          this.rho += (1 + time / 500) * (time - this.timeline) / 20
-          this.theta -= Math.PI / 500 * this.dir * (time - this.timeline) / 20
+        mutate(time, delta) {
+          this.rho += (1 + time / 500) * delta / 20
+          this.theta -= Math.PI / 10000 * this.dir * delta
           this.polarLocate()
         }
       }))
