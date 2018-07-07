@@ -21,6 +21,7 @@ new Vue({
       stopTime: 0,
       lastTime: 0,
       self: new Self({
+        hp: 1000,
         x: 0,
         y: 0,
         v: 8,
@@ -36,6 +37,8 @@ new Vue({
     this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
+    this.context.fillStyle = this.backgroundcolor
+    this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
     this.self.initialize(this.context)
   },
 
@@ -106,6 +109,7 @@ new Vue({
         <div>Load</div>
       </button>
       <p>{{ filename || 'No file loaded.' }}</p>
+      <p>{{self.hp||0}}</p>
     </div>
   </div>`
 })
