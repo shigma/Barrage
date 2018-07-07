@@ -27,44 +27,40 @@ module.exports = new Barrage({
     }
   },
 
-  mutate(time) {
-    const result = []
-    if (Utility.interval(Math.random() * 15 + 20, this.timeline, time) && time % 3000 > 2000) {
-      for (let i = 1; i <= Math.floor(Math.random() * 3 + 1); i++) {
-        g = Math.random() * 160 + 80
-        result.push({
-          state: {
-            radius: Math.random() * 4 + 6,
-            color: Utility.rgb(Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8),
-            x: 0,
-            raw_y: Math.random() * 100 * Utility.rpm(),
-            gy: g
-          },
-          mutate(time) {
-            this.y = this.raw_y + (this.gy * time / 1000 * time / 1000) * (this.ref.self.y < this.ref.base.y ? -1 : 1)
-          }
-        })
-      }
-    }
-    if (Utility.interval(900, this.timeline, time) && time > 2000) {
-      clr = Utility.rgb(Math.random() * 0.7, Math.random() * 0.7, Math.random() * 0.7)
-      x_bias = Math.random() * 80 * Utility.rpm()
-      y_bias = Math.random() * 80 * Utility.rpm()
-      for (let i = 0; i < 17; i++) {
-        result.push({
+  mounted() {
+    this.setTimeout(2000, () => {
+      this.setInterval(900, () => {
+        const clr = Utility.rgb(Math.random() * 0.7, Math.random() * 0.7, Math.random() * 0.7)
+        this.emitBullets(17, (index) => ({
           state: {
             radius: 18,
             color: clr,
             rho: 0,
-            theta: Math.PI * (1 / 2 + 2 / 17 * i)
+            theta: Math.PI * (1 / 2 + 2 / 17 * index)
           },
           mutate(time) {
             this.rho += (1 + time / 1000 * 2) * (time - this.timeline) / 20
             this.polarLocate()
           }
-        })
-      }
+        }))
+      })
+    })
+  },
+
+  mutate(time) {
+    if (Utility.interval(Math.random() * 15 + 20, this.timeline, time) && time % 3000 > 2000) {
+      this.emitBullets(1, Math.floor(Math.random() * 3 + 1), () => ({
+        state: {
+          radius: Math.random() * 4 + 6,
+          color: Utility.rgb(Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8),
+          x: 0,
+          raw_y: Math.random() * 100 * Utility.rpm(),
+          gy: Math.random() * 160 + 80
+        },
+        mutate(time) {
+          this.y = this.raw_y + (this.gy * time / 1000 * time / 1000) * (this.ref.self.y < this.ref.base.y ? -1 : 1)
+        }
+      }))
     }
-    return result
   }
 })
