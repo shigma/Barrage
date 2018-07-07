@@ -25,7 +25,7 @@ new Vue({
         y: 0,
         v: 8,
         radius: 6,
-        color: 'black',
+        color: 'grey',
         keyState
       })
     }
@@ -33,6 +33,7 @@ new Vue({
 
   mounted() {
     this.barrages = []
+    this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
     this.self.initialize(this.context)
@@ -47,7 +48,9 @@ new Vue({
       return barrage.id
     },
     display(timestamp) {
-      this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      //this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      this.context.fillStyle = this.backgroundcolor
+      this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
       this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
       this.self.update()
       this.active = requestAnimationFrame(this.display)
