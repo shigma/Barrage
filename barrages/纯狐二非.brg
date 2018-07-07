@@ -4,12 +4,14 @@ const Barrage = require('../Barrage')
 module.exports = new Barrage({
   reference: {
     base: {
-      x: 200,
-      y: 160,
-      radius: 20,
-      color: 'yellow',
-      mutate(time) {
-        if (Utility.interval(2000, this.timeline, time)) {
+      state: {
+        x: 200,
+        y: 160,
+        radius: 20,
+        color: 'yellow'
+      },
+      mounted() {
+        this.setInterval(2000, () => {
           this.lastx = this.x
           this.lasty = this.y
           if (this.x < 160) {
@@ -20,7 +22,10 @@ module.exports = new Barrage({
             this.nextx = this.x + (Math.random() * 40 + 40) * Utility.rpm()
           }
           this.nexty = Math.random() * 40 + 140
-        } else if (time % 2000 > 1000) {
+        })
+      },
+      mutate(time) {
+        if (time % 2000 > 1000) {
           this.x = Utility.smooth(this.lastx, this.nextx, (time % 2000 - 1000) / 1000)
           this.y = Utility.smooth(this.lasty, this.nexty, (time % 2000 - 1000) / 1000)
         }
@@ -35,13 +40,13 @@ module.exports = new Barrage({
       this.emitBullets(1, 100, (index) => ({
         state: {
           rho: 0,
-          theta:  Math.PI * (1 / 2 + index / 50),
+          theta:  1 / 2 + index / 50,
           radius: 6,
           color: 'maroon'
         },
         mutate(time, delta) {
           this.rho += (1 + time / 500) * delta / 20
-          this.theta -= Math.PI / 10000 * this.dir * delta
+          this.theta -= delta / 10000 * this.dir
           this.polarLocate()
         }
       }))
