@@ -11,6 +11,7 @@ new Vue({
 
   data() {
     return {
+      docWindow: null,
       frameTime: 0,
       frameCount: 0,
       filename: '',

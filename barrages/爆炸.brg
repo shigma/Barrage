@@ -3,18 +3,20 @@ const Barrage = require('../Barrage')
 
 const createBase = function (color, constvx, initX, Dy, bv) {
   return {
-    x: 200,
-    y: 160,
-    radius: 10,
-    color: color,
-    constVx: constvx,
-    initx: initX,
-    deltay: Dy,
-    vx: constvx,
-    vy: 5,
-    centerx: 200,
-    centery: 160,
-    bulletv: bv,
+    state: {
+      x: 200,
+      y: 160,
+      radius: 10,
+      color: color,
+      constVx: constvx,
+      initx: initX,
+      deltay: Dy,
+      vx: constvx,
+      vy: 5,
+      centerx: 200,
+      centery: 160,
+      bulletv: bv,
+    },
     mutate(time) {
       if (Math.abs(this.x - this.centerx) > 5) {
         this.x += this.vx
