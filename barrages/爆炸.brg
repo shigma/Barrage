@@ -1,0 +1,64 @@
+const Utility = require('../utility')
+const Barrage = require('../Barrage')
+
+const createBase = function (color, constvx, initX, Dy, bv) {
+  return {
+    x: 200,
+    y: 160,
+    radius: 10,
+    color: color,
+    constVx: constvx,
+    initx: initX,
+    deltay: Dy,
+    vx: constvx,
+    vy: 5,
+    centerx: 200,
+    centery: 160,
+    bulletv: bv,
+    mutate(time) {
+      if (Math.abs(this.x - this.centerx) > 5) {
+        this.x += this.vx
+        this.y += this.vy
+        this.radius = 40 * 100 / (100 + Math.abs(this.centerx - this.x))
+      }else{
+        this.x = initX
+        this.y = Math.random() * 160 + 160 * this.deltay
+        this.vx = this.constVx
+        this.vy = -(this.y - 160) / ((200 - this.x) / this.vx)
+        this.radius = 10
+      }
+    }
+  }
+}
+
+module.exports = new Barrage({
+  reference: {
+    base1: createBase('red'  , 5 , -100, 0, 3),
+    base2: createBase('green', 5 , -100, 1, 5),
+    base3: createBase('blue' , -5,  500, 0, 7),
+    base4: createBase('yellow' , -5,  500, 1, 9),
+  },
+  mutate(time) {
+    for(var i = 1; i <= 4; i++){
+      if ((this.ref['base'+i].x - this.ref['base'+i].centerx) ** 2 < 100){
+        var num = 13
+        this.emitBullets(num,(index) => ({
+          state: {
+            rel: '',
+            radius: 20,
+            color: this.ref['base' + i].color,
+            x: 200,
+            y: 160,
+            theta: Math.PI * 2 / num * (index + Math.random()),
+            v: Math.random()*6 + 3//this.ref['base' + i].bulletv,
+          },
+          mutate(time){
+            this.x += this.v * Math.cos(this.theta)
+            this.y += this.v * Math.sin(this.theta)
+          }
+        }))
+        this.emitA = false
+      }
+    }
+  }
+})

@@ -204,7 +204,7 @@ class Bullet extends Point {
 
 Bullet.callback = {
   collideSelf(event){
-    this.ref.self.locate().hp = Math.min(event.dist, this.ref.self.locate().hp)
+    //this.ref.self.locate().hp = Math.min(event.dist, this.ref.self.locate().hp)
     if(event.result){
       this.parent.ref.self.hp --
       const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)
