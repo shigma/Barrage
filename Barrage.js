@@ -25,8 +25,10 @@ class Bullet extends Point {
 
   destroy() {
     const id = this.id
-    const index = this.parent.bullets.findIndex(bullet => bullet.id === id)
-    if (index) this.parent.bullets.splice(index, 1)
+    this.parent.setNextTick(function() {
+      const index = this.bullets.findIndex(bullet => bullet.id === id)
+      if (index) this.bullets.splice(index, 1)
+    })
   }
 
   drawTemplate(style, ...args) {
@@ -122,6 +124,9 @@ class Barrage extends UpdateObject {
 
   display(time) {
     this.bullets.forEach(bullet => bullet.update(time))
+    if (this.bullets.length > Barrage.maxBulletCount) {
+      throw new Error(`Error: The amount of bullets is beyond the limit!`)
+    }
   }
 
   setContext(context) {
@@ -132,19 +137,30 @@ class Barrage extends UpdateObject {
     if (this.mounted) this.mounted()
   }
 
-  pushBullet(item) {
-    const state = item.state || {}
-    const events = item.events || {}
-    const listener = item.listener || {}
-    const bullet = new Bullet(state, this.ref, events, listener, item.display)
+  pushBullet({
+    layer = 0,
+    state = {},
+    events = {},
+    listener = {},
+    mounted,
+    mutate,
+    display
+  }) {
+    const bullet = new Bullet(state, this.ref, events, listener, display)
     Object.assign(bullet, this.prop)
     bullet.id = Math.random() * 1e10
+    bullet.layer = layer
+    bullet.mutate = mutate
     bullet.parent = this
-    bullet.mutate = item.mutate
     bullet.context = this.context
     bullet.birth = this.timestamp
-    if (item.mounted) item.mounted.call(bullet)
-    this.bullets.push(bullet)
+    if (mounted) mounted.call(bullet)
+    const index = this.bullets.findIndex(bullet => bullet.layer > layer)
+    if (!index) {
+      this.bullets.push(bullet)
+    } else {
+      this.bullets.splice(index, 0, bullet)
+    }
   }
 
   emitBullets(...args) {
@@ -161,6 +177,8 @@ class Barrage extends UpdateObject {
     }
   }
 }
+
+Barrage.maxBulletCount = 1024
 
 Barrage.callback = {}
 

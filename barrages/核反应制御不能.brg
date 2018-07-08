@@ -33,7 +33,7 @@ module.exports = new Barrage({
         mutate(time, delta) {
           this.color = Utility.rgba(1, 1, 1 - time / 16000, 1 - time / 8000)
           this.bdColor = Utility.rgba(1, 1, 0.9, 1 - time / 4000)
-          this.glColor = Utility.rgba(1, 0.6, 0.8, time / 8000)
+          this.glColor = Utility.rgba(1, 0.6, 0.6, time / 7200)
           this.movePolar((1 + time / 500) * delta / 32, this.theta)
         },
         display() {
@@ -48,6 +48,7 @@ module.exports = new Barrage({
       if (time % 3200 < 1200) return
       const theta = time / 1200
       this.emitBullets(3, (index) => ({
+        layer: 2,
         state: {
           theta: theta + index * 2 / 3 + Math.random() / 6,
           radius: 8,

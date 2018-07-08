@@ -17,11 +17,12 @@ new Vue({
       active: null,
       stopTime: 0,
       lastTime: 0,
+      error: '',
       self: new Self({
         hp: 1000,
         x: 0,
         y: 0,
-        v: 6,
+        v: 4.5,
         radius: 6,
         color: 'grey'
       })
@@ -62,14 +63,23 @@ new Vue({
       if (timestamp - this.frameTime > MinFrame) {
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-        this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
+        this.barrages.forEach((barrage) => {
+          try {
+            barrage.update(timestamp - this.stopTime)
+          } catch (error) {
+            this.error = error
+          }
+        })
         this.self.update()
         this.frameCount += 1
         this.frameTime = timestamp
       }
-      this.active = requestAnimationFrame(this.display)
+      if (!this.error) {
+        this.active = requestAnimationFrame(this.display)
+      }
     },
     toggle() {
+      if (!this.filename) return
       if (this.active) {
         this.lastTime = performance.now()
         window.cancelAnimationFrame(this.active)
@@ -111,15 +121,16 @@ new Vue({
   template: `<div class="main">
     <canvas class="left" ref="canvas" width="400" height="600"/>
     <div class="right" align="center" ref="div">
-      <button @click="toggle">
+      <button @click="toggle" :class="{ disabled: !filename }">
         <div>{{ active ? 'Pause' : active === null ? 'Start' : 'Resume' }}</div>
       </button>
       <button @click="loadFile">
         <div>Load</div>
       </button>
-      <p>{{ filename || 'No file loaded.' }}</p>
-      <p>Hp: {{ self.hp || 0 }}</p>
-      <p>Fps: {{ frameRate }}</p>
+      <p>{{ filename || '未载入弹幕' }}</p>
+      <p>生命: {{ self.hp || 0 }}</p>
+      <p>帧率: {{ frameRate }}</p>
+      <p v-if="error">{{ error }}</p>
     </div>
   </div>`
 })
