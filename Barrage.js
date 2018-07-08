@@ -107,31 +107,21 @@ function inject(source, target) {
 }
 
 class Barrage extends UpdateObject {
-  constructor({reference = {}, mutate, mounted, events = {}, listener = {}}) {
+  constructor({reference = {}, mutate, mounted, events = {}, listener = {}, templates = {}}) {
     super({ mutate, mounted }, {
       events: Object.assign({}, Barrage.callback, events),
       listener: Object.assign({}, Barrage.listener, listener)
     })
-    this._ref = {}
+    this.ref = {}
     for (const key in reference) {
-      if (reference[key] instanceof Point) {
-        this._ref[key] = reference[key]
-      } else {
-        const point = new Point(reference[key].state || {})
-        point.mutate = reference[key].mutate
-        if (reference[key].mounted) {
-          reference[key].mounted.call(point)
-        }
-        this._ref[key] = point
-      }
+      this.setReference(key, reference[key])
     }
     this.prop = {}
     this.bullets = []
-    this.templates = {}
-    this.ref = this._ref
+    this.templates = templates
     this.setNextTick((time) => {
-      for (const key in this._ref) {
-        this._ref[key].update(time)
+      for (const key in this.ref) {
+        if (!this.ref[key].inserted) this.ref[key].update(time)
       }
       return true
     })
@@ -150,6 +140,17 @@ class Barrage extends UpdateObject {
       this.ref[key].context = context
     }
     if (this.mounted) this.mounted()
+  }
+
+  setReference(key, reference) {
+    if (reference instanceof Point) {
+      this.ref[key] = reference
+    } else {
+      const point = new Point(reference.state || {})
+      point.mutate = reference.mutate
+      if (reference.mounted) reference.mounted.call(point, this)
+      this.ref[key] = point
+    }
   }
 
   setTemplate(key, bullet) {

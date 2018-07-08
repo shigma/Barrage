@@ -103,13 +103,16 @@ class UpdateObject {
       } else {
         this.interval.splice(index, 1)
       }
+      return true
     }
+    return false
   }
 
-  setTimeout(time, callback) {
+  setTimeout(timeout, callback) {
+    timeout += this.timestamp
     this.setNextTick(() => {
-      if (this.timeline < time && this.timestamp >= time) {
-        callback.call(this, time)
+      if (this.timeline < timeout && this.timestamp >= timeout) {
+        callback.call(this, this.timestamp, this.timestamp - this.timeline)
       } else {
         return true
       }
