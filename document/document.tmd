@@ -2,62 +2,158 @@
 
 本文档提供了目前所有 API 的使用说明。
 
-## 基本框架
-
 为了编写一个弹幕，你需要编辑一个 brg 文件。这个文件使用 JavaScript 作为脚本，文件将输出一个 Barrage 对象。在这个 Barrage 对象中，你不仅可以定义弹幕和子弹的配置，还可以精细地控制每一个子弹在每时每刻的行为。不过不用担心，我们也提供了丰富的 API，使得你可以非常方便地控制所有的一切。
+
+## 更新周期 ((Update Cycle))
 
 在我们的软件中，无论是子弹，自机，敌机还是整片的弹幕都是 UpdateObject，即更新对象。它通过更新周期来进行管理。了解对象的更新周期可以帮助我们充分地认识弹幕和子弹具有的特性，有利于避免失误和提高性能。
 
+任何一个更新对象都包含下列形式的更新周期：
+
+### 1. timestamp
+
+这是一个更新周期的开始，对象的时间戳将被更新。
+
+### 2. nextTick
+
+这个阶段将完成对象的 nextTick 任务，比如子弹的`destroy()`方法的在弹幕对象中的回调等。它们可以通过`setNextTick()`函数来设置。
+
+### 3. interval
+
+这个阶段将完成对象的 interval 任务，举个例子，弹幕的周期性发射一般都在这里实现。它们可以通过`setInterval()`函数来设置。
+
+### 4. mutate
+
+这个阶段将执行`mutate()`回调函数，用户可以在这里进行子弹速度的更新，或者处理一些难以用`setInterval()`描述的任务。
+
+### 5. listen
+
+这个阶段将逐一判断对象的每一个监视器是否被触发。如果被触发了则会调用相应的回调函数。
+
+### 6. display
+
+这个阶段将完成对象的显示相关的任务，包括图形的渲染等。对于弹幕来说，其拥有的所有子弹的生命周期也将在这里进行一轮触发。
+
+### 7. timeline
+
+这是一个更新周期的结束，对象的时间轴将被更新。
+
+=====
+
 一个更新对象本身具有下面的 API：
+
+? setNextTick(*callback*)
+  为更新对象的下个更新周期设定一个回调函数。
+
+>g 状态: 稳定。此 API 将会一直存在。
+
+- callback: 回调函数，参数是 time, delta:
+  - time: 当前对象的时间戳。
+  - delta: 上个更新周期距今的时间。
+  - 返回值: 如果该函数有返回值且为真，那么该任务将被保留至下一个更新周期。否则该任务会被删除。
+
+-----
 
 ? setInterval(*interval*, *times*, *period*, *start*, *callback*)
   为更新对象设定一个计时回调。设定开始后的每个*period*中，从*start*起将每隔*interval*触发一次*callback*，共计触发不超过*times*次。
+  至少带有 2 个参数*interval*和*callback*。从第三个参数起依次是*times*，*period*，*start*。
+
+>g 状态: 稳定。此 API 将会一直存在。
 
 - interval: 每次执行回调的时间间隔。
 - times: 每个周期中执行回调的次数，默认为 Infinity。
-- period：回调唤醒的一个周期，默认为 Infinity。
-- start：每个周期中回调触发的开始时间，默认为 0。
-- callback：回调函数，参数是 time，即弹幕第一个更新周期到现在的时间。
+- period: 回调唤醒的一个周期，默认为 Infinity。
+- start: 每个周期中回调触发的开始时间，默认为 0。
+- callback: 回调函数，参数是 time, delta, iCount, pCount:
+  - time: 当前对象的时间戳。
+  - delta: 上个更新周期距今的时间。
+  - iCount: 当前 period 中的 interval 数，从 0 开始计数。
+  - pCount: 当前的 period 数，从 0 开始计数。
+- 返回值: 一个实数，表示这个更新对象的编号。
 
-## API: Barrage
+-----
 
-### new Barrage({reference, mounted, methods, events, listener})
+? removeInterval(*id*)
+  删除编号为 id 计时回调。
 
-构造一个新的弹幕对象。
+>g 状态: 稳定。此 API 将会一直存在。
+
+- id: 要删除的计时回调的 id。
+- 返回值: `true|false`，表示要删除的计时回调是否存在。
+
+-----
+
+? setTimeout(*timeout*, *callback*)
+  为更新对象设定一个定时回调。
+
+>g 状态: 稳定。此 API 将会一直存在。
+
+- timeout: 下一次执行距离目前的时间。
+- callback: 回调函数，参数是 time, delta:
+  - time: 当前对象的时间戳。
+  - delta: 上个更新周期距今的时间。
+
+## 生命周期
+
+同更新周期类似，这里的任何对象都有一个生命周期。尽管生命周期的意义不如更新周期那么大，但是它也是一个非常基础的概念。为生命周期提供的支持目前仅有`mounted()`函数一个，在生命周期的其他阶段可以尝试使用 events 来解决。
+
+### 1. create
+
+这个阶段负责对象的构造和初始化工作。
+
+### 2. mount
+
+这个阶段负责对象的编组分配，图层的排列，与渲染器的绑定，时间戳和时间轴的初始化工作。这个阶段完成后会调用回调函数`mounted()`。这个函数的唯一一个参数是该对象的父对象。对于子弹和参考点来说这个父对象就是创建它们的弹幕对象，对于弹幕对象则没有这个参数。
+
+### 3. update
+
+这个阶段便是对象的更新周期，包括运动，渲染，触发各种事件等等都在这里进行。
+
+### 4. destroy
+
+这个阶段中对象将被解绑，从而最后离开页面。
+
+## 弹幕 ((Barrage))
+
+? new Barrage({*reference*, *templates*, *mounted*, *mutate*, *events*, *listener*})
+  构造一个新的弹幕对象。
+
+>g 状态: 稳定。此 API 将会一直存在。
 
 - reference: 弹幕对象中涉及的参考点对象。
+- templates: 要构造的弹幕对象的模板子弹表。
 - mounted: 弹幕被挂载时触发的回调函数。
-- methods: 自定义方法列表，会自动注入该对象。
+- mutate: 弹幕每个更新周期触发的回调函数。
 - events: 弹幕遭遇事件的回调函数列表。
-- listener: 为弹幕提供的监听器。
+- listener: 为弹幕提供的监听器列表。
 
-### barrage.setInterval(interval, times, period, start, callback)
+? emitBullets(*start*, *end*, *step*, *callback*)
+  在当前弹幕中发射一批子弹。
+  至少带有 1 个参数*callback*。从第二个参数起依次是*end*，*start*，*stop*。
 
-为弹幕设定一个计时回调。
+>g 状态: 稳定。此 API 将会一直存在。
 
-- interval: 每次执行回调的时间间隔。
-- times: 每个周期中执行回调的次数，默认为 Infinity。
-- period：回调唤醒的一个周期，默认为 Infinity。
-- start：每个周期中回调触发的开始时间，默认为 0。
-- callback：回调函数，参数是 time，即弹幕第一个更新周期到现在的时间。
-
-### barrage.emitBullets(start, end, step, callback)
-
-在当前弹幕中发射子弹。当仅有 3 个参数时，默认为 start, end 和 callback。
-
-- start: 起始 index。
-- end: 终止 index。
-- step: 步长。
-- callback: 回调函数，参数是 index，返回一个子弹对象。
+- start: 起始 index，默认值为 0。
+- end: 终止 index，默认值为 1。
+- step: 步长，默认值为 1。
+- callback: 回调函数，参数是 index:
+  - index: 当前的循环变量。
+  - 返回值: 要创建的子弹对象。
 - callback 也可以直接是子弹对象本身。
 
-### 更新周期
+? setTemplate(*key*, *template*)
+  新建或覆盖一个名为*key*的模板子弹。
 
-1. timestamp
-2. nexttick
-3. before
-4. interval
-5. mutate
-6. listen
-7. diaplay
-8. timeline
+>b 状态: 实验。此 API 可能会更改语法或被取代。
+
+- key: 模板的名字。
+- template: 模板子弹对象。也可以使用`null`以删除原来的模板子弹。
+
+? setReference(*key*, *reference*)
+  新建或覆盖一个名为*key*的参考点。
+
+>b 状态: 实验。此 API 可能会更改语法或被取代。
+
+- key: 参考点的名字。
+- template: 参考点对象。也可以使用`null`以删除原来的参考点。
+
