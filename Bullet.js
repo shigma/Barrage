@@ -118,6 +118,10 @@ class UpdateObject {
       }
     })
   }
+
+  trigger(key, ...args) {
+    return this.events.emit(key, ...args)
+  }
 }
 
 UpdateObject.maxNextTickCount = 64
@@ -159,13 +163,13 @@ class Point extends UpdateObject {
     this.context.fill()
   }
 
-  polarLocate() {
-    const relTheta = this.ref.base ? (this.ref.base.theta || 0) : 0
-    this.x = this.rho * Math.cos(Math.PI * (relTheta + this.theta))
-    this.y = this.rho * Math.sin(Math.PI * (relTheta + this.theta))
+  polarLocate(rho = this.rho, theta) {
+    theta = theta || this.theta + (this.ref.base ? (this.ref.base.theta || 0) : 0)
+    this.x = rho * Math.cos(Math.PI * theta)
+    this.y = rho * Math.sin(Math.PI * theta)
   }
 
-  movePolar(rho, theta) {
+  movePolar(rho = this.rho, theta = this.theta) {
     this.x += rho * Math.cos(Math.PI * theta)
     this.y += rho * Math.sin(Math.PI * theta)
   }
@@ -186,7 +190,7 @@ class Point extends UpdateObject {
       }
     }
   }
-  
+
   getDistance(point) {
     return Math.sqrt((this.xabs - point.xabs) ** 2 + (this.yabs - point.yabs) ** 2)
   }

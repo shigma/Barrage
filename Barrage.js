@@ -31,8 +31,8 @@ class Bullet extends Point {
     })
   }
 
-  drawTemplate(style, ...args) {
-    return Bullet.template[style].call(this, ...args)
+  drawTemplate(style) {
+    return Bullet.template[style].call(this)
   }
 
   fillCircle(fill = this.color, radius = this.radius) {
@@ -62,7 +62,7 @@ Bullet.template = {
 }
 
 Bullet.callback = {
-  collideSelf() {
+  hitSelf() {
     this.parent.ref.self.hp --
     this.destroy()
   },
@@ -72,7 +72,7 @@ Bullet.callback = {
 }
 
 Bullet.listener = {
-  collideSelf(){
+  hitSelf(){
     const self = this.parent.ref.self
     const dist = this.getDistance(self)
     const result = dist < this.radius + self.radius
