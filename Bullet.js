@@ -9,7 +9,6 @@ class UpdateObject {
     this.interval = []
     this.timeline = -1
     this.timestamp = 0
-    this.status = 'created'
     for (const name in events) {
       this.events.on(name, (result) => {
         if (events[name] instanceof Function) {
@@ -68,10 +67,10 @@ class UpdateObject {
     this.timeline = time
 
     if (this.nextTick.length > UpdateObject.maxNextTickCount) {
-      throw `Error: The amount of next-ticks is beyond the limit!`
+      throw new Error(`Error: The amount of nextTicks (${this.nextTick.length}) is beyond the limit!`)
     }
     if (this.interval.length > UpdateObject.maxIntervalCount) {
-      throw `Error: The amount of intervals is beyond the limit!`
+      throw new Error(`Error: The amount of intervals (${this.interval.length}) is beyond the limit!`)
     }
   }
 

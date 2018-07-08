@@ -67,7 +67,7 @@ new Vue({
           try {
             barrage.update(timestamp - this.stopTime)
           } catch (error) {
-            this.error = error
+            console.error(error)
           }
         })
         this.self.update()

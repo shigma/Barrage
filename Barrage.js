@@ -92,6 +92,20 @@ Bullet.listener = {
   }
 }
 
+function isLiteral(data) {
+  return data instanceof Object && !(data instanceof Array) && !(data instanceof Function)
+}
+
+function inject(source, target) {
+  for (const key in source) {
+    if (key in target && isLiteral(target[key]) && isLiteral(source[key])) {
+      inject(source[key], target[key])
+    } else {
+      target[key] = source[key]
+    }
+  }
+}
+
 class Barrage extends UpdateObject {
   constructor({reference = {}, mutate, mounted, events = {}, listener = {}}) {
     super({ mutate, mounted }, {
@@ -113,6 +127,7 @@ class Barrage extends UpdateObject {
     }
     this.prop = {}
     this.bullets = []
+    this.templates = {}
     this.ref = this._ref
     this.setNextTick((time) => {
       for (const key in this._ref) {
@@ -137,7 +152,20 @@ class Barrage extends UpdateObject {
     if (this.mounted) this.mounted()
   }
 
-  pushBullet({
+  setTemplate(key, bullet) {
+    this.templates[key] = bullet
+  }
+
+  parseTemplate(data) {
+    if (data.template in this.templates) {
+      const result = this.templates[data.template]
+      delete data.template
+      inject(result, data)
+    }
+    return data
+  }
+
+  parseBullet({
     layer = 0,
     state = {},
     events = {},
@@ -154,7 +182,15 @@ class Barrage extends UpdateObject {
     bullet.parent = this
     bullet.context = this.context
     bullet.birth = this.timestamp
-    if (mounted) mounted.call(bullet)
+    if (mounted) mounted.call(bullet, this)
+    return bullet
+  }
+
+  pushBullet(bullet) {
+    if (!(bullet instanceof Bullet)) {
+      bullet = this.parseBullet(this.parseTemplate(bullet))
+    }
+    const layer = bullet.layer || 0
     const index = this.bullets.findIndex(bullet => bullet.layer > layer)
     if (!index) {
       this.bullets.push(bullet)
