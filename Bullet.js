@@ -22,69 +22,110 @@ class UpdateObject {
     if (!this.birth) this.birth = time
     time -= this.birth
     this.timestamp = time
+    const delta = time - this.timeline
 
     // nextTick
-    this.nextTick.forEach(({id, func}) => {
-      const result = func.call(this, time)
-      if (!result) {
-        const index = this.nextTick.findIndex(item => item.id === id)
-        if (index) this.nextTick.splice(index, 1)
-      }
+    this.status = 'nextTick'
+    this._NextTick = []
+    this.nextTick.forEach((item) => {
+      const result = item.func.call(this, time, delta)
+      if (!result) item.birth = -1
     })
+    this.nextTick = this.nextTick.filter(item => item.birth >= 0).concat(this._NextTick)
 
     // Interval
+    this.status = 'interval'
+    this._Interval = []
     this.interval.forEach(({args, birth}) => {
+      const time = this.timestamp - birth
       const maxTime = args.length > 2 ? args[1] * args[0] : Infinity
-      const period = args.length > 3 ? (this.timestamp - birth) % args[2] : this.timestamp - birth
+      const period = args.length > 3 ? time % args[2] : time
       const start = args.length > 4 ? args[3] : 0
       const getAge = stamp => Math.floor((stamp - birth) / args[0])
-      if (getAge(this.timestamp) > getAge(this.timeline) && start + period < maxTime) {
-        return args[args.length - 1](this.timestamp)
+      if (getAge(time) > getAge(this.timeline - birth) && period - start < maxTime) {
+        const iWave = Math.floor((period - start) / args[0])
+        const pWave = args.length > 3 ? Math.floor(time / args[2]) : 0
+        return args[args.length - 1](time, delta, iWave, pWave)
       }
     })
+    this.interval = this.interval.filter(item => item.birth >= 0).concat(this._Interval)
 
     // Mutate
-    if (this.mutate) this.mutate(time)
+    this.status = 'mutate'
+    if (this.mutate) this.mutate(time, delta)
 
     // Listen
+    this.status = 'listen'
     for (const name in this.listener) {
-      const result = this.listener[name].call(this, time)
+      const result = this.listener[name].call(this, time, delta)
       if (result) this.events.emit(name, result)
     }
 
     // Display
-    if (this.display) this.display(time)
+    this.status = 'display'
+    if (this.display) this.display(time, delta)
     this.timeline = time
+
+    if (this.nextTick.length > UpdateObject.maxNextTickCount) {
+      throw new Error(`Error: The amount of nextTicks (${this.nextTick.length}) is beyond the limit!`)
+    }
+    if (this.interval.length > UpdateObject.maxIntervalCount) {
+      throw new Error(`Error: The amount of intervals (${this.interval.length}) is beyond the limit!`)
+    }
   }
 
   // API
   setNextTick(func) {
-    const id = Math.random() * 1e10
-    this.nextTick.push({ id, func })
+    const birth = this.timestamp
+    if (this.status === 'nextTick') {
+      this._NextTick.push({ func, birth })
+    } else {
+      this.nextTick.push({ func, birth })
+    }
   }
 
   setInterval(...args) {
     const id = Math.random() * 1e10
     const birth = this.timestamp
-    this.interval.push({ id, args, birth })
+    if (this.status === 'interval') {
+      this._Interval.push({ id, args, birth })
+    } else {
+      this.interval.push({ id, args, birth })
+    }
     return id
   }
 
   removeInterval(id) {
     const index = this.interval.findIndex(item => item.id === id)
-    if (index) this.interval.splice(index, 1)
+    if (index) {
+      if (this.status === 'interval') {
+        this.interval[index].birth = -1
+      } else {
+        this.interval.splice(index, 1)
+      }
+      return true
+    }
+    return false
   }
 
-  setTimeout(time, callback) {
+  setTimeout(timeout, callback) {
+    timeout += this.timestamp
     this.setNextTick(() => {
-      if (this.timeline < time && this.timestamp >= time) {
-        callback.call(this, time)
+      if (this.timeline < timeout && this.timestamp >= timeout) {
+        callback.call(this, this.timestamp, this.timestamp - this.timeline)
       } else {
         return true
       }
     })
   }
+
+  trigger(key, ...args) {
+    return this.events.emit(key, ...args)
+  }
 }
+
+UpdateObject.maxNextTickCount = 64
+UpdateObject.maxIntervalCount = 16
 
 class Point extends UpdateObject {
   constructor(...args) {
@@ -122,6 +163,34 @@ class Point extends UpdateObject {
     this.context.fill()
   }
 
+  polarLocate(rho = this.rho, theta) {
+    theta = theta || this.theta + (this.ref.base ? (this.ref.base.theta || 0) : 0)
+    this.x = rho * Math.cos(Math.PI * theta)
+    this.y = rho * Math.sin(Math.PI * theta)
+  }
+
+  movePolar(rho = this.rho, theta = this.theta) {
+    this.x += rho * Math.cos(Math.PI * theta)
+    this.y += rho * Math.sin(Math.PI * theta)
+  }
+
+  getTheta(point) {
+    if (point.x === this.xabs) {
+      if (point.y >= this.yabs) {
+        return 0.5
+      } else {
+        return -0.5
+      }
+    } else {
+      const result = Math.atan((point.y - this.yabs) / (point.x - this.xabs)) / Math.PI
+      if (point.x > this.xabs) {
+        return result
+      } else {
+        return 1 + result
+      }
+    }
+  }
+
   getDistance(point) {
     return Math.sqrt((this.xabs - point.xabs) ** 2 + (this.yabs - point.yabs) ** 2)
   }
@@ -140,6 +209,13 @@ class Self extends Point {
     if (context) this.context = context
     this.x = this.context.canvas.width / 2
     this.y = this.context.canvas.height / 8 * 7
+    this.keyState = {
+      ArrowLeft: false,
+      ArrowDown: false,
+      ArrowRight: false,
+      ArrowUp: false,
+      Shift: false
+    }
     this.display()
   }
 
@@ -147,7 +223,7 @@ class Self extends Point {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
       (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
-    ) / (this.keyState.Shift ? 4 : 1)
+    ) / (this.keyState.Shift ? 3 : 1)
 
     this.x += speed * this.keyState.ArrowRight
     this.x -= speed * this.keyState.ArrowLeft
@@ -161,91 +237,4 @@ class Self extends Point {
   }
 }
 
-class Bullet extends Point {
-  constructor(state, reference, events, listener) {
-    super(state, {
-      events: Object.assign({}, Bullet.callback, events),
-      listener: Object.assign({}, Bullet.listener, listener)
-    })
-    this.ref = {}
-    for (const key in reference) {
-      this.ref[key] = reference[key].copy()
-    }
-  }
-
-  polarLocate() {
-    const relTheta = this.ref.base ? (this.ref.base.theta || 0) : 0
-    this.x = this.rho * Math.cos(relTheta + this.theta)
-    this.y = this.rho * Math.sin(relTheta + this.theta)
-  }
-
-  movePolar(rho, theta) {
-    this.x += rho * Math.cos(theta)
-    this.y += rho * Math.sin(theta)
-  }
-
-  getTheta(point) {
-    if (point.x === this.xabs) {
-      if (point.y >= this.yabs) {
-        return Math.PI / 2
-      } else {
-        return -Math.PI / 2
-      }
-    } else {
-      const result = Math.atan((point.y - this.yabs) / (point.x - this.xabs))
-      if (point.x > this.xabs) {
-        return result
-      } else {
-        return Math.PI + result
-      }
-    }
-  }
-}
-
-Bullet.callback = {
-  collideSelf(event){
-    //this.ref.self.locate().hp = Math.min(event.dist, this.ref.self.locate().hp)
-    if(event.result){
-      this.parent.ref.self.hp --
-      const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)
-      if (index) this.parent.bullets.splice(index, 1)
-    }
-    //console.log(this.ref.self.locate().hp)
-  },
-  leave() {
-    const index = this.parent.bullets.findIndex(bullet => bullet.id === this.id)
-    if (index) this.parent.bullets.splice(index, 1)
-  }
-}
-
-Bullet.listener = {
-  collideSelf(){
-    const self = this.parent.ref.self
-    const dist = Math.sqrt((this.xabs - self.x) * (this.xabs - self.x) + 
-                           (this.yabs - self.y) * (this.yabs - self.y)
-    )
-    const result = (dist < (this.radius + self.radius) )
-    return { dist, result }
-  },
-  border() {
-    const top = this.yabs < 0
-    const left = this.xabs < 0
-    const right = this.xabs > this.context.canvas.width
-    const bottom = this.yabs > this.context.canvas.height
-    if (top || left || right || bottom) {
-      return { top, left, right, bottom }
-    }
-  },
-  leave() {
-    return this.x * this.x + this.y * this.y > 1e6
-  }
-}
-
-Bullet.ReboundOnBorder = function() {
-  const x = this.x + this.v * Math.cos(this.t)
-  const y = this.y += this.v * Math.sin(this.t)
-  if (y > this.context.canvas.height || y < 0) this.t = -this.t
-  if (x > this.context.canvas.width || x < 0) this.t = Math.PI - this.t
-}
-
-module.exports = { UpdateObject, Point, Bullet, Self }
+module.exports = { UpdateObject, Point, Self }

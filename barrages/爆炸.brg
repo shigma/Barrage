@@ -1,44 +1,40 @@
 const Utility = require('../utility')
 const Barrage = require('../Barrage')
 
-const createBase = function (color, constvx, initX, Dy, bv) {
-  return {
-    state: {
-      x: 200,
-      y: 160,
-      radius: 10,
-      color: color,
-      constVx: constvx,
-      initx: initX,
-      deltay: Dy,
-      vx: constvx,
-      vy: 5,
-      centerx: 200,
-      centery: 160,
-      bulletv: bv,
-    },
-    mutate(time) {
-      if (Math.abs(this.x - this.centerx) > 5) {
-        this.x += this.vx
-        this.y += this.vy
-        this.radius = 40 * 100 / (100 + Math.abs(this.centerx - this.x))
-      }else{
-        this.x = initX
-        this.y = Math.random() * 160 + 160 * this.deltay
-        this.vx = this.constVx
-        this.vy = -(this.y - 160) / ((200 - this.x) / this.vx)
-        this.radius = 10
-      }
-    }
-  }
-}
-
 module.exports = new Barrage({
-  reference: {
-    base1: createBase('red'  , 5 , -100, 0, 3),
-    base2: createBase('green', 5 , -100, 1, 5),
-    base3: createBase('blue' , -5,  500, 0, 7),
-    base4: createBase('yellow' , -5,  500, 1, 9),
+  methods: {
+    createBase(name, data) {
+      this.setReference(name, {
+        state: {
+          ...data,
+          x: 200,
+          y: 160,
+          radius: 10,
+          vy: 5,
+          centerx: 200,
+          centery: 160,
+        },
+        mutate() {
+          if (Math.abs(this.x - this.centerx) > 5) {
+            this.x += this.vx
+            this.y += this.vy
+            this.radius = 40 * 100 / (100 + Math.abs(this.centerx - this.x))
+          }else{
+            this.x = this.initX
+            this.y = Math.random() * 160 + 160 * this.deltay
+            this.vx = this.constVx
+            this.vy = -(this.y - 160) / ((200 - this.x) / this.vx)
+            this.radius = 10
+          }
+        }
+      })
+    }
+  },
+  mounted() {
+    this.createBase('base1', {color: 'red', constVx: 5, vx: 5, initX: -100, Dy: 0, bv: 3})
+    this.createBase('base2', {color: 'green', constVx: 5, vx: 5, initX: -100, Dy: 1, bv: 5})
+    this.createBase('base3', {color: 'blue', constVx: -5, vx: -5, initX: 500, Dy: 0, bv: 7})
+    this.createBase('base4', {color: 'yellow', constVx: -5, vx: -5, initX: 500, Dy: 1, bv: 9})
   },
   mutate(time) {
     for(var i = 1; i <= 4; i++){

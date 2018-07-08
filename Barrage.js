@@ -1,17 +1,15 @@
 const { UpdateObject, Point } = require('./Bullet')
 
 class Bullet extends Point {
-  constructor(state, reference, events, listener, display) {
+  constructor(state, {events, listener}) {
     super(state, {
       events: Object.assign({}, Bullet.callback, events),
       listener: Object.assign({}, Bullet.listener, listener)
     })
     this.show = true
-    this.ref = {}
-    for (const key in reference) {
-      this.ref[key] = reference[key].copy()
-    }
+  }
 
+  mount(display) {
     if (display instanceof Function) {
       this.display = function(...args) {
         if (this.show) display.call(this, ...args)
@@ -21,6 +19,7 @@ class Bullet extends Point {
         if (this.show) Bullet.template[this.style].call(this, ...args)
       }
     }
+    if (this.mounted) this.mounted(this.parent)
   }
 
   destroy() {
@@ -92,33 +91,39 @@ Bullet.listener = {
   }
 }
 
-function isLiteral(data) {
-  return data instanceof Object && !(data instanceof Array) && !(data instanceof Function)
-}
-
-function inject(source, target) {
-  for (const key in source) {
-    if (key in target && isLiteral(target[key]) && isLiteral(source[key])) {
-      inject(source[key], target[key])
-    } else {
-      target[key] = source[key]
-    }
-  }
-}
-
 class Barrage extends UpdateObject {
-  constructor({reference = {}, mutate, mounted, events = {}, listener = {}, templates = {}}) {
-    super({ mutate, mounted }, {
+  constructor({reference = {}, mutate, mounted, events = {}, listener = {}, methods = {}}) {
+    super(Object.assign(methods, { mutate, mounted }), {
       events: Object.assign({}, Barrage.callback, events),
       listener: Object.assign({}, Barrage.listener, listener)
     })
-    this.ref = {}
-    for (const key in reference) {
-      this.setReference(key, reference[key])
-    }
-    this.prop = {}
+    this._ref = reference
     this.bullets = []
-    this.templates = templates
+  }
+
+  // Display: bullets update cycle
+  display(time) {
+    this.bullets.forEach(bullet => bullet.update(time))
+    if (this.bullets.length > Barrage.maxBulletCount) {
+      throw new Error(`Error: The amount of bullets is beyond the limit!`)
+    }
+  }
+
+  // Mount: bind context and register reference
+  mount(context) {
+    this.context = context
+
+    // set reference
+    this.ref = {}
+    for (const key in this._ref) {
+      this.setReference(key, this._ref[key])
+    }
+    delete this._ref
+
+    // callback set by users
+    if (this.mounted) this.mounted()
+
+    // reference auto update
     this.setNextTick((time) => {
       for (const key in this.ref) {
         if (!this.ref[key].inserted) this.ref[key].update(time)
@@ -127,71 +132,35 @@ class Barrage extends UpdateObject {
     })
   }
 
-  display(time) {
-    this.bullets.forEach(bullet => bullet.update(time))
-    if (this.bullets.length > Barrage.maxBulletCount) {
-      throw new Error(`Error: The amount of bullets is beyond the limit!`)
-    }
+  parsePoint(type, {state = {}, events, listener, mutate, mounted}) {
+    return new type(Object.assign(state, {
+      mutate,
+      mounted,
+      parent: this,
+      context: this.context,
+      birth: this.timestamp,
+      id: Math.random() * 1e10
+    }), {events, listener})
   }
 
-  setContext(context) {
-    this.context = context
+  setReference(key, data) {
+    const point = this.parsePoint(Point, data)
+    if (point.mounted) point.mounted.call(point, this)
+    this.ref[key] = point
+  }
+
+  pushBullet(data) {
+    const bullet = this.parsePoint(Bullet, data)
+
+    // Bind reference
+    bullet.ref = {}
     for (const key in this.ref) {
-      this.ref[key].context = context
+      bullet.ref[key] = this.ref[key].copy()
     }
-    if (this.mounted) this.mounted()
-  }
+    bullet.mount(data.display)
 
-  setReference(key, reference) {
-    if (reference instanceof Point) {
-      this.ref[key] = reference
-    } else {
-      const point = new Point(reference.state || {})
-      point.mutate = reference.mutate
-      if (reference.mounted) reference.mounted.call(point, this)
-      this.ref[key] = point
-    }
-  }
-
-  setTemplate(key, bullet) {
-    this.templates[key] = bullet
-  }
-
-  parseTemplate(data) {
-    if (data.template in this.templates) {
-      const result = this.templates[data.template]
-      delete data.template
-      inject(result, data)
-    }
-    return data
-  }
-
-  parseBullet({
-    layer = 0,
-    state = {},
-    events = {},
-    listener = {},
-    mounted,
-    mutate,
-    display
-  }) {
-    const bullet = new Bullet(state, this.ref, events, listener, display)
-    Object.assign(bullet, this.prop)
-    bullet.id = Math.random() * 1e10
-    bullet.layer = layer
-    bullet.mutate = mutate
-    bullet.parent = this
-    bullet.context = this.context
-    bullet.birth = this.timestamp
-    if (mounted) mounted.call(bullet, this)
-    return bullet
-  }
-
-  pushBullet(bullet) {
-    if (!(bullet instanceof Bullet)) {
-      bullet = this.parseBullet(this.parseTemplate(bullet))
-    }
-    const layer = bullet.layer || 0
+    // Insert into bullet array
+    const layer = bullet.layer = data.layer || 0
     const index = this.bullets.findIndex(bullet => bullet.layer > layer)
     if (!index) {
       this.bullets.push(bullet)

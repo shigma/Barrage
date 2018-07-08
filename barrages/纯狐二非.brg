@@ -34,8 +34,8 @@ module.exports = new Barrage({
   },
 
   mounted() {
-    this.prop.dir = Utility.rpm()
-    this.setInterval(2000, () => this.prop.dir *= -1)
+    this.direction = Utility.rpm()
+    this.setInterval(2000, () => this.direction *= -1)
     this.setInterval(160, 3, 2000, () => {
       this.emitBullets(1, 100, (index) => ({
         state: {
@@ -47,9 +47,12 @@ module.exports = new Barrage({
           bdColor: 'maroon',
           thickness: 4
         },
+        mounted(parent) {
+          this.direction = parent.direction
+        },
         mutate(time, delta) {
           this.rho += (1 + time / 500) * delta / 20
-          this.theta -= delta / 10000 * this.dir
+          this.theta -= delta / 10000 * this.direction
           this.polarLocate()
         }
       }))

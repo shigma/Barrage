@@ -13,7 +13,6 @@ module.exports = new Barrage({
   },
 
   mounted() {
-    this.prop.dir = Utility.rpm()
     this.setInterval(600, 2, 3200, () => {
       const theta = Math.random() / 2
       this.emitBullets(8, (index) => ({
