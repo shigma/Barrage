@@ -1,4 +1,4 @@
-const { dialog } = require('electron').remote
+const { dialog, BrowserWindow } = require('electron').remote
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
@@ -10,13 +10,6 @@ new Vue({
   el: '#app',
 
   data() {
-    const keyState = {
-      ArrowLeft: false,
-      ArrowDown: false,
-      ArrowRight: false,
-      ArrowUp: false,
-      Shift: false
-    }
     return {
       frameTime: 0,
       frameCount: 0,
@@ -24,14 +17,14 @@ new Vue({
       active: null,
       stopTime: 0,
       lastTime: 0,
+      error: '',
       self: new Self({
         hp: 1000,
         x: 0,
         y: 0,
-        v: 6,
+        v: 4.5,
         radius: 6,
-        color: 'grey',
-        keyState
+        color: 'grey'
       })
     }
   },
@@ -47,6 +40,7 @@ new Vue({
   },
 
   mounted() {
+    this.docWindow = null
     this.barrages = []
     this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
@@ -63,6 +57,7 @@ new Vue({
       barrage.id = Math.random() * 1e10
       barrage.setContext(this.context)
       barrage.ref.self = this.self
+      barrage.ref.self.inserted = true
       this.barrages.push(barrage)
       return barrage.id
     },
@@ -70,14 +65,23 @@ new Vue({
       if (timestamp - this.frameTime > MinFrame) {
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-        this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
+        this.barrages.forEach((barrage) => {
+          try {
+            barrage.update(timestamp - this.stopTime)
+          } catch (error) {
+            console.error(error)
+          }
+        })
         this.self.update()
         this.frameCount += 1
         this.frameTime = timestamp
       }
-      this.active = requestAnimationFrame(this.display)
+      if (!this.error) {
+        this.active = requestAnimationFrame(this.display)
+      }
     },
     toggle() {
+      if (!this.filename) return
       if (this.active) {
         this.lastTime = performance.now()
         window.cancelAnimationFrame(this.active)
@@ -113,21 +117,41 @@ new Vue({
           }
         }
       })
+    },
+    showDocuments() {
+      if (!this.docWindow) {
+        this.docWindow = new BrowserWindow({
+          width: 800,
+          height: 600,
+          center: true,
+          backgroundColor: '#282828',
+          useContentSize: true,
+          autoHideMenuBar: true
+        })
+        this.docWindow.loadFile('document/index.html')
+        this.docWindow.on('closed', () => {
+          this.docWindow = null
+        })
+      }
     }
   },
 
   template: `<div class="main">
     <canvas class="left" ref="canvas" width="400" height="600"/>
     <div class="right" align="center" ref="div">
-      <button @click="toggle">
+      <button @click="toggle" :class="{ disabled: !filename }">
         <div>{{ active ? 'Pause' : active === null ? 'Start' : 'Resume' }}</div>
       </button>
       <button @click="loadFile">
         <div>Load</div>
       </button>
-      <p>{{ filename || 'No file loaded.' }}</p>
-      <p>Hp: {{ self.hp || 0 }}</p>
-      <p>Fps: {{ frameRate }}</p>
+      <button @click="showDocuments" :class="{ disabled: docWindow }">
+        <div>Document</div>
+      </button>
+      <p>{{ filename || '未载入弹幕' }}</p>
+      <p>生命: {{ self.hp || 0 }}</p>
+      <p>帧率: {{ frameRate }}</p>
+      <p v-if="error">{{ error }}</p>
     </div>
   </div>`
 })

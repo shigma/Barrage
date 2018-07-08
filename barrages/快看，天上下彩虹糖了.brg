@@ -6,10 +6,12 @@ const Barrage = require('../Barrage')
 module.exports = new Barrage({
   reference: {
     base: {
-      x: 0,
-      y: 45,
-      radius: 15,
-      color: 'blue',
+      state: {
+        x: 0,
+        y: 45,
+        radius: 15,
+        color: 'blue'
+      },
       mutate(time) {
         if (Utility.interval(3000, this.timeline, time)) {
           this.lastx = this.x
@@ -36,7 +38,7 @@ module.exports = new Barrage({
             radius: 18,
             color: clr,
             rho: 0,
-            theta: Math.PI * (1 / 2 + 2 / 17 * index)
+            theta: 1 / 2 + 2 / 17 * index
           },
           mutate(time) {
             this.rho += (1 + time / 1000 * 2) * (time - this.timeline) / 20

@@ -4,48 +4,40 @@ const Barrage = require('../Barrage')
 module.exports = new Barrage({
   reference: {
     base: {
-      x: 200,
-      y: 160,
-      radius: 20,
-      color: 'yellow',
-      face: Math.PI / 180 * 65,
-      mutate(time) {
-        this.x += 10 * Math.cos(this.face)
-        this.y += 10 * Math.sin(this.face)
+      state: {
+        x: 200,
+        y: 160,
+        rho: 10,
+        radius: 20,
+        color: 'yellow',
+        theta: 65 / 180
+      },
+      mutate() {
+        this.movePolar(this.rho, this.theta)
         if (this.x > 380 || this.x < 20){
-          this.face = Math.PI - this.face
-        }else if (this.y > 380 || this.y < 20){
-          this.face = - this.face
+          this.theta = 1 - this.theta
+        } else if (this.y > 380 || this.y < 20){
+          this.theta = -this.theta
         }
       }
     }
   },
 
-  mounted(time) {
+  mounted() {
     this.setInterval(200, () => {
       var clr = Utility.rgb(Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3)
       var num = 17
-      var delta = Math.random() * Math.PI
-      this.emitBullets(num,(index) => ({
+      var delta = Math.random()
+      this.emitBullets(num, (index) => ({
         state: {
           radius: 5,
           color: clr,
           rho: 0,
-          theta: Math.PI * (1 / 2 + 2 / num * index) + delta,
-          createTime: time,
+          theta: 1 / 2 + 2 / num * index + delta,
           v:3
         },
         mutate(time) {
-          /*
-          if (time < 2000) {
-            this.rho += this.v - time / 1000 * this.v
-          }else if (time < 2500) {
-            this.rho -= time / 1000 * this.v / 2
-          }else {
-            this.rho += this.v
-          }
-          */
-          this.rho += this.v
+          this.rho = time / 8
           this.polarLocate()
         }
       }))

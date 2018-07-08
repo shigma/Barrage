@@ -15,7 +15,7 @@ globals:
   getRender: true
 rules:
   indent:
-    - warn
+    - off
     - 2
     - SwitchCase: 1
   linebreak-style:

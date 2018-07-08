@@ -1,25 +1,127 @@
-const { UpdateObject, Point, Bullet } = require('./Bullet')
+const { UpdateObject, Point } = require('./Bullet')
+
+class Bullet extends Point {
+  constructor(state, reference, events, listener, display) {
+    super(state, {
+      events: Object.assign({}, Bullet.callback, events),
+      listener: Object.assign({}, Bullet.listener, listener)
+    })
+    this.show = true
+    this.ref = {}
+    for (const key in reference) {
+      this.ref[key] = reference[key].copy()
+    }
+
+    if (display instanceof Function) {
+      this.display = function(...args) {
+        if (this.show) display.call(this, ...args)
+      }
+    } else if (this.style in Bullet.template) {
+      this.display = function(...args) {
+        if (this.show) Bullet.template[this.style].call(this, ...args)
+      }
+    }
+  }
+
+  destroy() {
+    const id = this.id
+    this.parent.setNextTick(function() {
+      const index = this.bullets.findIndex(bullet => bullet.id === id)
+      if (index) this.bullets.splice(index, 1)
+    })
+  }
+
+  drawTemplate(style) {
+    return Bullet.template[style].call(this)
+  }
+
+  fillCircle(fill = this.color, radius = this.radius) {
+    this.context.beginPath()
+    this.context.arc(this.xabs, this.yabs, radius, 0, Math.PI * 2)
+    this.context.closePath()
+    this.context.fillStyle = fill
+    this.context.fill()
+  }
+
+  getGradient(c1, c2, r1, r2 = this.radius) {
+    const gradient = this.context.createRadialGradient(
+      this.xabs, this.yabs, r1,
+      this.xabs, this.yabs, r2
+    )
+    gradient.addColorStop(0, c1)
+    gradient.addColorStop(1, c2)
+    return gradient
+  }
+}
+
+Bullet.template = {
+  border() {
+    const gradient = this.getGradient(this.color, this.bdColor, this.innerR || 0)
+    this.fillCircle(gradient)
+  }
+}
+
+Bullet.callback = {
+  hitSelf() {
+    this.parent.ref.self.hp --
+    this.destroy()
+  },
+  leave() {
+    this.destroy()
+  }
+}
+
+Bullet.listener = {
+  hitSelf(){
+    const self = this.parent.ref.self
+    const dist = this.getDistance(self)
+    const result = dist < this.radius + self.radius
+    if (result) return true
+  },
+  border() {
+    const top = this.yabs < 0
+    const left = this.xabs < 0
+    const right = this.xabs > this.context.canvas.width
+    const bottom = this.yabs > this.context.canvas.height
+    if (top || left || right || bottom) {
+      return { top, left, right, bottom }
+    }
+  },
+  leave() {
+    return this.x * this.x + this.y * this.y > 1e6
+  }
+}
+
+function isLiteral(data) {
+  return data instanceof Object && !(data instanceof Array) && !(data instanceof Function)
+}
+
+function inject(source, target) {
+  for (const key in source) {
+    if (key in target && isLiteral(target[key]) && isLiteral(source[key])) {
+      inject(source[key], target[key])
+    } else {
+      target[key] = source[key]
+    }
+  }
+}
 
 class Barrage extends UpdateObject {
-  constructor({reference = {}, mutate, mounted, events = {}, listener = {}}) {
+  constructor({reference = {}, mutate, mounted, events = {}, listener = {}, templates = {}}) {
     super({ mutate, mounted }, {
       events: Object.assign({}, Barrage.callback, events),
       listener: Object.assign({}, Barrage.listener, listener)
     })
-    this._ref = {}
+    this.ref = {}
     for (const key in reference) {
-      if (reference[key] instanceof Point) {
-        this._ref[key] = reference[key]
-      } else {
-        this._ref[key] = new Point(reference[key])
-      }
+      this.setReference(key, reference[key])
     }
     this.prop = {}
     this.bullets = []
-    this.ref = this._ref
+    this.templates = templates
     this.setNextTick((time) => {
-      for (const key in this._ref) {
-        this._ref[key].update(time)
+      for (const key in this.ref) {
+        if (!this.ref[key].inserted) this.ref[key].update(time)
       }
       return true
     })
@@ -27,6 +129,9 @@ class Barrage extends UpdateObject {
 
   display(time) {
     this.bullets.forEach(bullet => bullet.update(time))
+    if (this.bullets.length > Barrage.maxBulletCount) {
+      throw new Error(`Error: The amount of bullets is beyond the limit!`)
+    }
   }
 
   setContext(context) {
@@ -37,19 +142,62 @@ class Barrage extends UpdateObject {
     if (this.mounted) this.mounted()
   }
 
-  pushBullet(item) {
-    const state = item.state || {}
-    const events = item.events || {}
-    const listener = item.listener || {}
-    const bullet = new Bullet(state, this.ref, events, listener)
+  setReference(key, reference) {
+    if (reference instanceof Point) {
+      this.ref[key] = reference
+    } else {
+      const point = new Point(reference.state || {})
+      point.mutate = reference.mutate
+      if (reference.mounted) reference.mounted.call(point, this)
+      this.ref[key] = point
+    }
+  }
+
+  setTemplate(key, bullet) {
+    this.templates[key] = bullet
+  }
+
+  parseTemplate(data) {
+    if (data.template in this.templates) {
+      const result = this.templates[data.template]
+      delete data.template
+      inject(result, data)
+    }
+    return data
+  }
+
+  parseBullet({
+    layer = 0,
+    state = {},
+    events = {},
+    listener = {},
+    mounted,
+    mutate,
+    display
+  }) {
+    const bullet = new Bullet(state, this.ref, events, listener, display)
     Object.assign(bullet, this.prop)
     bullet.id = Math.random() * 1e10
+    bullet.layer = layer
+    bullet.mutate = mutate
     bullet.parent = this
-    bullet.mutate = item.mutate
     bullet.context = this.context
     bullet.birth = this.timestamp
-    if (item.mounted) item.mounted.call(bullet)
-    this.bullets.push(bullet)
+    if (mounted) mounted.call(bullet, this)
+    return bullet
+  }
+
+  pushBullet(bullet) {
+    if (!(bullet instanceof Bullet)) {
+      bullet = this.parseBullet(this.parseTemplate(bullet))
+    }
+    const layer = bullet.layer || 0
+    const index = this.bullets.findIndex(bullet => bullet.layer > layer)
+    if (!index) {
+      this.bullets.push(bullet)
+    } else {
+      this.bullets.splice(index, 0, bullet)
+    }
   }
 
   emitBullets(...args) {
@@ -66,6 +214,8 @@ class Barrage extends UpdateObject {
     }
   }
 }
+
+Barrage.maxBulletCount = 1024
 
 Barrage.callback = {}
 

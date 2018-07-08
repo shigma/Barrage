@@ -1,0 +1,71 @@
+const Utility = require('../utility')
+const Barrage = require('../Barrage')
+
+module.exports = new Barrage({
+  reference: {
+    base: {
+      state: {
+        x: 200,
+        y: 160,
+        show: false
+      }
+    }
+  },
+
+  mounted() {
+    this.prop.dir = Utility.rpm()
+    this.setInterval(600, 2, 3200, () => {
+      const theta = Math.random() / 2
+      this.emitBullets(8, (index) => ({
+        state: {
+          rho: 20,
+          theta: index / 4 + theta,
+          radius: 80,
+          innerR: 40,
+          outerR: 120
+        },
+        mounted() {
+          this.rho += Math.random() * 20 - 10
+          this.theta += Math.random() / 8
+          this.polarLocate()
+          this.theta += Math.random() / 16
+        },
+        mutate(time, delta) {
+          this.color = Utility.rgba(1, 1, 1 - time / 16000, 1 - time / 8000)
+          this.bdColor = Utility.rgba(1, 1, 0.9, 1 - time / 4000)
+          this.glColor = Utility.rgba(1, 0.6, 0.6, time / 7200)
+          this.movePolar((1 + time / 500) * delta / 32, this.theta)
+        },
+        display() {
+          const fdColor = Utility.rgba(0.8, 0.6, 1, 0)
+          const gradient = this.getGradient(fdColor, this.glColor, this.outerR)
+          this.fillCircle(gradient, this.outerR)
+          this.drawTemplate('border')
+        }
+      }))
+    })
+    this.setInterval(32, Infinity, 3200, 600, (time) => {
+      if (time % 3200 < 1200) return
+      const theta = time / 1200
+      this.emitBullets(3, (index) => ({
+        layer: 2,
+        state: {
+          theta: theta + index * 2 / 3 + Math.random() / 6,
+          radius: 8,
+          innerR: 5,
+          style: 'border',
+          color: 'white',
+          bdColor: 'blue'
+        },
+        mounted() {
+          this.rho = Math.random() * 8
+          this.theta += Math.random() / 32
+        },
+        mutate(time, delta) {
+          this.rho += (1 + time / 500) * delta / 40
+          this.polarLocate()
+        }
+      }))
+    })
+  }
+})

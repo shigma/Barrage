@@ -1,0 +1,71 @@
+// Kouchya的弹幕练习(II)
+
+const Utility = require("../utility")
+const Barrage = require("../Barrage")
+
+module.exports = new Barrage({
+    reference: {
+        base: {
+            state: {
+                x: 200,
+                y: 160,
+                radius: 15,
+                color: "maroon"
+            }
+        },
+        base2: {
+            state: {
+                x: 90,
+                y: 240,
+                radius: 10,
+                color: "#6cf066",
+            },
+            mutate(time) {
+                if (Utility.interval(6000, this.timeline, time)) {
+                    this.lastx = this.x
+                    this.lasty = this.y
+                    this.nextx = Math.random() * 400
+                    this.nexty = Math.random() * 600
+                } else if (time % 6000 > 3000 && time % 6000 < 5000) {
+                    this.x = Utility.smooth(this.lastx, this.nextx, (time % 6000 - 3000) / 2000)
+                    this.y = Utility.smooth(this.lasty, this.nexty, (time % 6000 - 3000) / 2000)
+                }
+            }
+        }
+    },
+
+    mounted() {
+        this.setInterval(125, 80, 12000, (time) => {
+            this.emitBullets(10, (index) => ({
+                state: {
+                    rho: 0,
+                    theta: (index + 3 * Math.sin(2 * Math.PI / 10000 * (time % 12000))) / 5,
+                    radius: 6,
+                    color: "#1b2fe9"
+                },
+                /*mounted() {
+                    this.theta += this.getTheta(this.ref.self)
+                },*/
+                mutate(time) {
+                    this.rho += 4
+                    this.polarLocate()
+                }
+            }))
+        })
+        this.setInterval(1000, 3, 6000, (time, dtime, wave) => {
+            this.emitBullets(14, (index) => ({
+                state: {
+                    rel: "base2",
+                    rho: 0,
+                    theta: index / 7,
+                    radius: 20,
+                    color: wave == 0 ? Utility.rgb(0.1, 0.75, 0.8) : wave == 1 ? Utility.rgb(0.75, 0.8, 0.1) : Utility.rgb(0.8, 0.1, 0.75)
+                },
+                mutate(time, delta) {
+                    this.rho = 180 * time / 1000 - 0.5 * 120 * time / 1000 * time / 1000
+                    this.polarLocate()
+                }
+            }))
+        })
+    }
+})
