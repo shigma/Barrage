@@ -1,4 +1,4 @@
-const { dialog } = require('electron').remote
+const { dialog, BrowserWindow } = require('electron').remote
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
@@ -40,6 +40,7 @@ new Vue({
   },
 
   mounted() {
+    this.docWindow = null
     this.barrages = []
     this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
@@ -115,6 +116,20 @@ new Vue({
           }
         }
       })
+    },
+    showDocuments() {
+      if (!this.docWindow) {
+        this.docWindow = new BrowserWindow({
+          width: 800,
+          height: 600,
+          center: true,
+          useContentSize: true
+        })
+        this.docWindow.loadFile('document/index.html')
+        this.docWindow.on('closed', () => {
+          this.docWindow = null
+        })
+      }
     }
   },
 
@@ -126,6 +141,9 @@ new Vue({
       </button>
       <button @click="loadFile">
         <div>Load</div>
+      </button>
+      <button @click="showDocuments">
+        <div>Document</div>
       </button>
       <p>{{ filename || '未载入弹幕' }}</p>
       <p>生命: {{ self.hp || 0 }}</p>
