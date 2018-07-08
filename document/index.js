@@ -23,12 +23,11 @@ new Vue({
 
   data() {
     const data = fs.readFileSync(__dirname + '/document.tmd', {encoding: 'utf8'})
-    console.log(data)
     return {
       root: new Lexer().lex(data),
       docScrolled: false,
-      height: document.body.clientHeight,
-      width: document.body.clientWidth
+      height: window.innerHeight,
+      width: window.innerWidth
     }
   },
 
@@ -36,8 +35,8 @@ new Vue({
     this.h2nodes = Array.from(this.$refs.doc.getElementsByTagName('h2'))
 
     addEventListener('resize', () => {
-      this.height = window.innerHeight - 48
-      this.width = window.innerWidth - (this.sidebar ? 64 : 0)
+      this.height = window.innerHeight
+      this.width = window.innerWidth
     }, {passive: true})
 
     this.docScroll = SmoothScroll(this.$refs.doc, {
@@ -52,7 +51,7 @@ new Vue({
       let url = event.srcElement.dataset.rawUrl
       if (!url) return
       if (url.startsWith('$issue#')) {
-        open('https://github.com/obstudio/Thulium-Music-3/issues/' + url.slice(7))
+        open('https://github.com/Shigma/Barrage/issues/' + url.slice(7))
       } else if (url.startsWith('#')) {
         this.switchDoc(this.current.path + url)
       } else {
@@ -78,10 +77,12 @@ new Vue({
     }
   },
 
-  template: `<div class="tm-document">
-    <div class="tm-doc" ref="doc" @click="navigate"
-      @mousewheel.prevent.stop="docScroll.scrollByDelta($event.deltaY)"
-      :class="{ scrolled: docScrolled }">
+  template: `<div class="main">
+    <div class="tm-doc" ref="doc" @click="navigate" :class="{ scrolled: docScrolled }"
+      @mousewheel.prevent.stop="docScroll.scrollByDelta($event.deltaY)" :style="{
+        'padding-left': Math.max(32, width / 6) + 'px',
+        'padding-right': Math.max(32, width / 6) + 'px'
+      }">
       <component v-for="(comp, index) in root" :is="comp.type" :node="comp" :key="index"/>
     </div>
   </div>`

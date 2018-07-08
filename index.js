@@ -123,7 +123,9 @@ new Vue({
           width: 800,
           height: 600,
           center: true,
-          useContentSize: true
+          backgroundColor: '#282828',
+          useContentSize: true,
+          autoHideMenuBar: true
         })
         this.docWindow.loadFile('document/index.html')
         this.docWindow.on('closed', () => {
@@ -142,7 +144,7 @@ new Vue({
       <button @click="loadFile">
         <div>Load</div>
       </button>
-      <button @click="showDocuments">
+      <button @click="showDocuments" :class="{ disabled: docWindow }">
         <div>Document</div>
       </button>
       <p>{{ filename || '未载入弹幕' }}</p>

@@ -1,3 +1,24 @@
+# API 文档
+
+本文档提供了目前所有 API 的使用说明。
+
+## 基本框架
+
+为了编写一个弹幕，你需要编辑一个 brg 文件。这个文件使用 JavaScript 作为脚本，文件将输出一个 Barrage 对象。在这个 Barrage 对象中，你不仅可以定义弹幕和子弹的配置，还可以精细地控制每一个子弹在每时每刻的行为。不过不用担心，我们也提供了丰富的 API，使得你可以非常方便地控制所有的一切。
+
+在我们的软件中，无论是子弹，自机，敌机还是整片的弹幕都是 UpdateObject，即更新对象。它通过更新周期来进行管理。了解对象的更新周期可以帮助我们充分地认识弹幕和子弹具有的特性，有利于避免失误和提高性能。
+
+一个更新对象本身具有下面的 API：
+
+? setInterval(*interval*, *times*, *period*, *start*, *callback*)
+  为更新对象设定一个计时回调。设定开始后的每个*period*中，从*start*起将每隔*interval*触发一次*callback*，共计触发不超过*times*次。
+
+- interval: 每次执行回调的时间间隔。
+- times: 每个周期中执行回调的次数，默认为 Infinity。
+- period：回调唤醒的一个周期，默认为 Infinity。
+- start：每个周期中回调触发的开始时间，默认为 0。
+- callback：回调函数，参数是 time，即弹幕第一个更新周期到现在的时间。
+
 ## API: Barrage
 
 ### new Barrage({reference, mounted, methods, events, listener})
@@ -10,7 +31,7 @@
 - events: 弹幕遭遇事件的回调函数列表。
 - listener: 为弹幕提供的监听器。
 
-### barrage.setInterval(interval, [times, [period, [start,]]] callback)
+### barrage.setInterval(interval, times, period, start, callback)
 
 为弹幕设定一个计时回调。
 
@@ -20,7 +41,7 @@
 - start：每个周期中回调触发的开始时间，默认为 0。
 - callback：回调函数，参数是 time，即弹幕第一个更新周期到现在的时间。
 
-### barrage.emitBullets([[start,] end, [step,]] callback)
+### barrage.emitBullets(start, end, step, callback)
 
 在当前弹幕中发射子弹。当仅有 3 个参数时，默认为 start, end 和 callback。
 
