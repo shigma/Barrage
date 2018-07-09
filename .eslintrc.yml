@@ -11,8 +11,7 @@ parserOptions:
   ecmaFeatures:
     jsx: true
 globals:
-  VueCompile: true
-  getRender: true
+  API: true
 rules:
   indent:
     - off

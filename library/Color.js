@@ -1,4 +1,4 @@
-const builtin = require('./library/builtin.json')
+const builtin = require('./builtin.json')
 
 function to256(scale) {
   scale *= 256

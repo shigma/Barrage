@@ -2,9 +2,14 @@ const electron = require('electron')
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
-const { Self } = require('./Bullet')
+const { Self } = require('./library/Bullet')
+const { Barrage } = require('./library/Barrage')
 
 const MinFrame = 10
+global.API = {
+  Utility: require('./library/utility'),
+  Color: require('./library/Color')
+}
 
 new Vue({
   el: '#app',
@@ -58,11 +63,11 @@ new Vue({
 
   methods: {
     addBarrage(barrage) {
-      barrage.id = Math.random() * 1e10
-      barrage.mount(this.context)
-      barrage.ref.self = this.self
-      barrage.ref.self.inserted = true
-      this.barrage = barrage
+      this.barrage = new Barrage(barrage)
+      this.barrage.id = Math.random() * 1e10
+      this.barrage.mount(this.context)
+      this.barrage.ref.self = this.self
+      this.barrage.ref.self.inserted = true
       return barrage.id
     },
     display(timestamp) {
@@ -121,6 +126,7 @@ new Vue({
       })
     },
     showDocuments() {
+      if (this.docOpen) return
       electron.ipcRenderer.send('createDoc')
     }
   },

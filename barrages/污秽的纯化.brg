@@ -1,7 +1,4 @@
-const Utility = require('../utility')
-const Barrage = require('../Barrage')
-
-module.exports = new Barrage({
+module.exports = {
   methods: {
     template(data) {
       return {
@@ -40,4 +37,4 @@ module.exports = new Barrage({
       }))
     })
   }
-})
+}

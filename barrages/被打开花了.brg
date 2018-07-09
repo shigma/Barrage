@@ -1,9 +1,8 @@
 // Kouchya的弹幕练习(II)
 
-const Utility = require("../utility")
-const Barrage = require("../Barrage")
+const { Utility } = API
 
-module.exports = new Barrage({
+module.exports = {
     reference: {
         base: {
             state: {
@@ -68,4 +67,4 @@ module.exports = new Barrage({
             }))
         })
     }
-})
+}

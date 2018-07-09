@@ -190,4 +190,4 @@ Barrage.callback = {}
 
 Barrage.listener = {}
 
-module.exports = Barrage
+module.exports = { Barrage, Bullet }
