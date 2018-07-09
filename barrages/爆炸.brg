@@ -4,23 +4,23 @@ module.exports = {
       this.setReference(name, {
         state: {
           ...data,
-          x: 200,
-          y: 160,
+          x: 240,
+          y: 140,
           radius: 10,
-          vy: 5,
-          centerx: 200,
-          centery: 160,
+          initY: 140,
+          centerx: 240,
+          centery: 140,
+          colInt: 1000,
         },
-        mutate() {
+        mutate(time) {
           if (Math.abs(this.x - this.centerx) > 5) {
-            this.x += this.vx
-            this.y += this.vy
+            this.x = this.initX + (this.centerx - this.initX) * (time % this.colInt) / this.colInt
+            this.y = this.initY + (this.centery - this.initY) * (time % this.colInt) / this.colInt
             this.radius = 40 * 100 / (100 + Math.abs(this.centerx - this.x))
           }else{
             this.x = this.initX
-            this.y = Math.random() * 160 + 160 * this.deltay
-            this.vx = this.constVx
-            this.vy = -(this.y - 160) / ((200 - this.x) / this.vx)
+            this.initY = Math.random() * 140 + 140 * this.Dy
+            this.y = this.initY
             this.radius = 10
           }
         }
@@ -28,31 +28,34 @@ module.exports = {
     }
   },
   mounted() {
-    this.createBase('base1', {color: 'red', constVx: 5, vx: 5, initX: -100, Dy: 0, bv: 3})
-    this.createBase('base2', {color: 'green', constVx: 5, vx: 5, initX: -100, Dy: 1, bv: 5})
-    this.createBase('base3', {color: 'blue', constVx: -5, vx: -5, initX: 500, Dy: 0, bv: 7})
-    this.createBase('base4', {color: 'yellow', constVx: -5, vx: -5, initX: 500, Dy: 1, bv: 9})
+    this.createBase('base1', {color: 'red'   , vx:  5, initX: -100, Dy: 0})
+    this.createBase('base2', {color: 'green' , vx:  5, initX: -100, Dy: 1})
+    this.createBase('base3', {color: 'blue'  , vx: -5, initX:  500, Dy: 0})
+    this.createBase('base4', {color: 'yellow', vx: -5, initX:  500, Dy: 1})
   },
   mutate(time) {
     for(var i = 1; i <= 4; i++){
       if ((this.ref['base'+i].x - this.ref['base'+i].centerx) ** 2 < 100){
-        var num = 13
+        var num = 11
         this.emitBullets(num,(index) => ({
+          layer:Math.random(),
           state: {
             rel: '',
             radius: 20,
             color: this.ref['base' + i].color,
-            x: 200,
-            y: 160,
+            x: 0,
+            y: 0,
+            rho: 0,
             theta: Math.PI * 2 / num * (index + Math.random()),
-            v: Math.random()*6 + 3//this.ref['base' + i].bulletv,
+            v: Math.random()*6
           },
           mutate(time){
-            this.x += this.v * Math.cos(this.theta)
-            this.y += this.v * Math.sin(this.theta)
+            this.rho = time / (5 + this.v)
+            this.polarLocate()
+            this.x += 240
+            this.y += 140
           }
         }))
-        this.emitA = false
       }
     }
   }
