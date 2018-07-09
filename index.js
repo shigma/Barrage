@@ -1,27 +1,35 @@
-const { dialog } = require('electron').remote
+const electron = require('electron')
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
-const { Self } = require('./Bullet')
-
+const path = require('path')
+const Self = require('./library/self')
+const Barrage = require('./library/barrage')
 const MinFrame = 10
+
+global.API = {
+  Utility: require('./library/utility'),
+  Color: require('./library/Color')
+}
 
 new Vue({
   el: '#app',
 
   data() {
     return {
+      docOpen: null,
       frameTime: 0,
       frameCount: 0,
       filename: '',
       active: null,
       stopTime: 0,
       lastTime: 0,
+      error: '',
       self: new Self({
         hp: 1000,
         x: 0,
         y: 0,
-        v: 6,
+        v: 4.5,
         radius: 6,
         color: 'grey'
       })
@@ -35,11 +43,18 @@ new Vue({
       } else {
         return Math.round(1000 / MinFrame)
       }
+    },
+    title() {
+      if (this.filename) {
+        return path.basename(this.filename).slice(0, -4)
+      } else {
+        return '未载入弹幕'
+      }
     }
   },
 
   mounted() {
-    this.barrages = []
+    this.barrage = null
     this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
@@ -48,28 +63,40 @@ new Vue({
     this.self.initialize(this.context)
     addEventListener('keydown', event => this.self.keyState[event.key] = true)
     addEventListener('keyup', event => this.self.keyState[event.key] = false)
+    electron.ipcRenderer.send('mounted')
+    electron.ipcRenderer.on('message', (event, data) => {
+      this.docOpen = data.docOpen
+    })
   },
 
   methods: {
     addBarrage(barrage) {
-      barrage.id = Math.random() * 1e10
-      barrage.setContext(this.context)
-      barrage.ref.self = this.self
-      this.barrages.push(barrage)
+      this.barrage = new Barrage(barrage)
+      this.barrage.id = Math.random() * 1e10
+      this.barrage.mount(this.context)
+      this.barrage.ref.self = this.self
+      this.barrage.ref.self.inserted = true
       return barrage.id
     },
     display(timestamp) {
       if (timestamp - this.frameTime > MinFrame) {
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-        this.barrages.forEach(barrage => barrage.update(timestamp - this.stopTime))
+        try {
+          this.barrage.update(timestamp - this.stopTime)
+        } catch (error) {
+          console.error(error)
+        }
         this.self.update()
         this.frameCount += 1
         this.frameTime = timestamp
       }
-      this.active = requestAnimationFrame(this.display)
+      if (!this.error) {
+        this.active = requestAnimationFrame(this.display)
+      }
     },
     toggle() {
+      if (!this.filename) return
       if (this.active) {
         this.lastTime = performance.now()
         window.cancelAnimationFrame(this.active)
@@ -80,46 +107,59 @@ new Vue({
       }
     },
     loadFile() {
-      dialog.showOpenDialog(null, {
+      electron.remote.dialog.showOpenDialog(null, {
         title: 'Load Barrage',
         properties: ['openFile'],
         filters: [
           { name: 'Barrage', extensions: ['brg'] }
         ]
       }, (filepaths) => {
-        if (filepaths) {
-          this.barrages = []
-          if (this.active) {
-            this.lastTime = performance.now()
-            window.cancelAnimationFrame(this.active)
-          }
-          this.active = null
-          this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-          this.self.initialize()
-          try {
-            this.addBarrage(require(filepaths[0]))
-            this.filename = filepaths[0].slice(__dirname.length + 10, -4)
-          } catch (error) {
-            this.filename = ''
-            console.error(error)
-          }
-        }
+        if (filepaths) this.parseFile(filepaths[0])
       })
+    },
+    parseFile(filepath) {
+      this.barrage = null
+      if (this.active) {
+        this.lastTime = performance.now()
+        window.cancelAnimationFrame(this.active)
+      }
+      this.active = null
+      this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      this.self.initialize()
+      try {
+        this.addBarrage(require(filepath))
+        delete require.cache[require.resolve(filepath)]
+        this.filename = filepath
+      } catch (error) {
+        this.filename = ''
+        console.error(error)
+      }
+    },
+    showDocuments() {
+      if (this.docOpen) return
+      electron.ipcRenderer.send('createDoc')
     }
   },
 
   template: `<div class="main">
-    <canvas class="left" ref="canvas" width="400" height="600"/>
+    <canvas ref="canvas" width="480" height="560"/>
     <div class="right" align="center" ref="div">
-      <button @click="toggle">
+      <button @click="toggle" :class="{ disabled: !filename }">
         <div>{{ active ? 'Pause' : active === null ? 'Start' : 'Resume' }}</div>
       </button>
       <button @click="loadFile">
         <div>Load</div>
       </button>
-      <p>{{ filename || 'No file loaded.' }}</p>
-      <p>Hp: {{ self.hp || 0 }}</p>
-      <p>Fps: {{ frameRate }}</p>
+      <button @click="parseFile(filename)" :class="{ disabled: !filename }">
+        <div>Reload</div>
+      </button>
+      <button @click="showDocuments" :class="{ disabled: docOpen }">
+        <div>Document</div>
+      </button>
+      <p>{{ title }}</p>
+      <p>生命: {{ self.hp || 0 }}</p>
+      <p>帧率: {{ frameRate }}</p>
+      <p v-if="error">{{ error }}</p>
     </div>
   </div>`
 })

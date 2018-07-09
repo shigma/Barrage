@@ -1,41 +1,34 @@
-const Utility = require('../utility')
-const Barrage = require('../Barrage')
+const { Utility } = API
 
-module.exports = new Barrage({
+module.exports = {
   reference: {
     base: {
       state: {
-        x: 200,
+        x: 240,
         y: 160,
         radius: 20,
         color: 'yellow'
       },
       mounted() {
         this.setInterval(2000, () => {
-          this.lastx = this.x
-          this.lasty = this.y
-          if (this.x < 160) {
-            this.nextx = this.x + Math.random() * 60 + 60
-          } else if (this.x > 240) {
-            this.nextx = this.x - Math.random() * 60 - 60
-          } else {
-            this.nextx = this.x + (Math.random() * 40 + 40) * Utility.rpm()
+          this.last = this.copy()
+          this.next = {
+            x: Utility.xTransfer(this.x, 200, 60, 100),
+            y: Math.random() * 40 + 140
           }
-          this.nexty = Math.random() * 40 + 140
         })
       },
       mutate(time) {
         if (time % 2000 > 1000) {
-          this.x = Utility.smooth(this.lastx, this.nextx, (time % 2000 - 1000) / 1000)
-          this.y = Utility.smooth(this.lasty, this.nexty, (time % 2000 - 1000) / 1000)
+          this.smooth(this.last, this.next, (time % 2000 - 1000) / 1000)
         }
       }
     }
   },
 
   mounted() {
-    this.prop.dir = Utility.rpm()
-    this.setInterval(2000, () => this.prop.dir *= -1)
+    this.direction = Utility.rpm()
+    this.setInterval(2000, () => this.direction *= -1)
     this.setInterval(160, 3, 2000, () => {
       this.emitBullets(1, 100, (index) => ({
         state: {
@@ -45,14 +38,17 @@ module.exports = new Barrage({
           color: 'white',
           style: 'border',
           bdColor: 'maroon',
-          thickness: 4
+          innerR: 3
+        },
+        mounted(parent) {
+          this.direction = parent.direction
         },
         mutate(time, delta) {
           this.rho += (1 + time / 500) * delta / 20
-          this.theta -= delta / 10000 * this.dir
+          this.theta -= delta / 10000 * this.direction
           this.polarLocate()
         }
       }))
     })
   }
-})
+}

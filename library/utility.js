@@ -23,10 +23,33 @@ function rpm() {
   return Math.floor(Math.random() * 2) * 2 - 1
 }
 
+function rreal(...args) {
+  const start = args.length > 1 ? args[0] : 0
+  const end = args[args.length - 1]
+  return Math.random() * (end - start) + start
+}
+
+function rint(...args) {
+  return Math.floor(rreal(...args))
+}
+
+function xTransfer(x, maigin, min, max) {
+  if (x < maigin) {
+    return x + rreal(min, max)
+  } else if (x > 480 - maigin) {
+    return x - rreal(min, max)
+  } else {
+    return x + rreal(min, max) * rpm()
+  }
+}
+
 module.exports = {
+  xTransfer,
   rgb,
   rgba,
   interval,
   smooth,
-  rpm
+  rpm,
+  rint,
+  rreal
 }

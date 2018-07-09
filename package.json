@@ -17,10 +17,12 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
+    "electron": "^2.0.0",
     "eslint": "^5.0.1",
-    "electron": "^2.0.0"
+    "sass": "^1.9.0"
   },
   "dependencies": {
+    "opn": "^5.3.0",
     "vue": "^2.5.16",
     "vue-template-compiler": "^2.5.16"
   }

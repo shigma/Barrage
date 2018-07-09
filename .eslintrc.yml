@@ -11,11 +11,10 @@ parserOptions:
   ecmaFeatures:
     jsx: true
 globals:
-  VueCompile: true
-  getRender: true
+  API: true
 rules:
   indent:
-    - warn
+    - off
     - 2
     - SwitchCase: 1
   linebreak-style:

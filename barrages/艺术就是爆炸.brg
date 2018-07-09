@@ -1,0 +1,64 @@
+module.exports = {
+  methods: {
+    createBase(name, data) {
+      this.setReference(name, {
+        state: {
+          ...data,
+          x: 240,
+          y: 140,
+          radius: 10,
+          initY: 140,
+          centerx: 240,
+          centery: 140,
+          colInt: 1500,
+        },
+        mutate(time) {
+          if (Math.abs(this.x - this.centerx) > 5) {
+            this.x = this.initX + (this.centerx - this.initX) * (time % this.colInt) / this.colInt
+            this.y = this.initY + (this.centery - this.initY) * (time % this.colInt) / this.colInt
+            this.radius = 40 * 100 / (100 + Math.abs(this.centerx - this.x))
+          }else{
+            this.x = this.initX
+            this.initY = Math.random() * 140 + 140 * this.Dy
+            this.y = this.initY
+            this.radius = 10
+          }
+        }
+      })
+    }
+  },
+  mounted() {
+    this.createBase('base1', {color: 'red'   , vx:  5, initX: -100, Dy: 0})
+    this.createBase('base2', {color: 'green' , vx:  5, initX: -100, Dy: 1})
+    this.createBase('base3', {color: 'blue'  , vx: -5, initX:  500, Dy: 0})
+    this.createBase('base4', {color: 'yellow', vx: -5, initX:  500, Dy: 1})
+    this.createBase('base5', {color: 'violet', vx: -5, initX:  500, Dy: 2})
+    this.createBase('base6', {color: 'orange', vx:  5, initX: -100, Dy: 2})
+  },
+  mutate(time) {
+    for(var i = 1; i <= 6; i++){
+      if ((this.ref['base'+i].x - this.ref['base'+i].centerx) ** 2 < 100){
+        var num = 7
+        this.emitBullets(num,(index) => ({
+          layer:Math.random(),
+          state: {
+            rel: '',
+            radius: 15 + Math.random() * 5,
+            color: this.ref['base' + i].color,
+            x: 0,
+            y: 0,
+            rho: 0,
+            theta: Math.PI * 2 / num * (index + 1.5 * Math.random()),
+            v: Math.random()*6
+          },
+          mutate(time){
+            this.rho = time / (5 + this.v)
+            this.polarLocate()
+            this.x += 240
+            this.y += 140
+          }
+        }))
+      }
+    }
+  }
+}
