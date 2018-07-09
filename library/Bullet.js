@@ -42,7 +42,6 @@ class Bullet extends Point {
     if (this._display) {
       this._display.call(this, time, delta)
     } else {
-      
       Bullet.styles[this.style || 'default'].display.call(this, time, delta)
     }
   }

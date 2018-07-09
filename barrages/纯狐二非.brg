@@ -11,22 +11,16 @@ module.exports = {
       },
       mounted() {
         this.setInterval(2000, () => {
-          this.lastx = this.x
-          this.lasty = this.y
-          if (this.x < 160) {
-            this.nextx = this.x + Math.random() * 60 + 60
-          } else if (this.x > 320) {
-            this.nextx = this.x - Math.random() * 60 - 60
-          } else {
-            this.nextx = this.x + (Math.random() * 40 + 40) * Utility.rpm()
+          this.last = this.copy()
+          this.next = {
+            x: Utility.xTransfer(this.x, 200, 60, 100),
+            y: Math.random() * 40 + 140
           }
-          this.nexty = Math.random() * 40 + 140
         })
       },
       mutate(time) {
         if (time % 2000 > 1000) {
-          this.x = Utility.smooth(this.lastx, this.nextx, (time % 2000 - 1000) / 1000)
-          this.y = Utility.smooth(this.lasty, this.nexty, (time % 2000 - 1000) / 1000)
+          this.smooth(this.last, this.next, (time % 2000 - 1000) / 1000)
         }
       }
     }
@@ -44,7 +38,7 @@ module.exports = {
           color: 'white',
           style: 'border',
           bdColor: 'maroon',
-          thickness: 4
+          innerR: 3
         },
         mounted(parent) {
           this.direction = parent.direction

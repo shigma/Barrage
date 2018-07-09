@@ -33,7 +33,18 @@ function rint(...args) {
   return Math.floor(rreal(...args))
 }
 
+function xTransfer(x, maigin, min, max) {
+  if (x < maigin) {
+    return x + rreal(min, max)
+  } else if (x > 480 - maigin) {
+    return x - rreal(min, max)
+  } else {
+    return x + rreal(min, max) * rpm()
+  }
+}
+
 module.exports = {
+  xTransfer,
   rgb,
   rgba,
   interval,

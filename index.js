@@ -2,6 +2,7 @@ const electron = require('electron')
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
+const path = require('path')
 const Self = require('./library/self')
 const Barrage = require('./library/barrage')
 const MinFrame = 10
@@ -41,6 +42,13 @@ new Vue({
         return Math.round(1000 / (this.frameTime - this.stopTime) * this.frameCount)
       } else {
         return Math.round(1000 / MinFrame)
+      }
+    },
+    title() {
+      if (this.filename) {
+        return path.basename(this.filename).slice(0, -4)
+      } else {
+        return '未载入弹幕'
       }
     }
   },
@@ -106,24 +114,26 @@ new Vue({
           { name: 'Barrage', extensions: ['brg'] }
         ]
       }, (filepaths) => {
-        if (filepaths) {
-          this.barrage = null
-          if (this.active) {
-            this.lastTime = performance.now()
-            window.cancelAnimationFrame(this.active)
-          }
-          this.active = null
-          this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-          this.self.initialize()
-          try {
-            this.addBarrage(require(filepaths[0]))
-            this.filename = filepaths[0].slice(__dirname.length + 10, -4)
-          } catch (error) {
-            this.filename = ''
-            console.error(error)
-          }
-        }
+        if (filepaths) this.parseFile(filepaths[0])
       })
+    },
+    parseFile(filepath) {
+      this.barrage = null
+      if (this.active) {
+        this.lastTime = performance.now()
+        window.cancelAnimationFrame(this.active)
+      }
+      this.active = null
+      this.context.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      this.self.initialize()
+      try {
+        this.addBarrage(require(filepath))
+        delete require.cache[require.resolve(filepath)]
+        this.filename = filepath
+      } catch (error) {
+        this.filename = ''
+        console.error(error)
+      }
     },
     showDocuments() {
       if (this.docOpen) return
@@ -140,10 +150,13 @@ new Vue({
       <button @click="loadFile">
         <div>Load</div>
       </button>
+      <button @click="parseFile(filename)" :class="{ disabled: !filename }">
+        <div>Reload</div>
+      </button>
       <button @click="showDocuments" :class="{ disabled: docOpen }">
         <div>Document</div>
       </button>
-      <p>{{ filename || '未载入弹幕' }}</p>
+      <p>{{ title }}</p>
       <p>生命: {{ self.hp || 0 }}</p>
       <p>帧率: {{ frameRate }}</p>
       <p v-if="error">{{ error }}</p>

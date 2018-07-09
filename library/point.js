@@ -30,8 +30,26 @@ class Point extends UpdateObject {
     this.y += rho * Math.sin(Math.PI * theta)
   }
 
+  smooth(from, to, progress) {
+    this.x = from.x + (to.x - from.x) / 2 * (1 - Math.cos(Math.PI * progress))
+    this.y = from.y + (to.y - from.y) / 2 * (1 - Math.cos(Math.PI * progress))
+  }
+
   getTheta(point) {
-    return Math.atan2(point._y - this._y, point._x - this._x)
+    if (point._x === this._x) {
+      if (point._y >= this._y) {
+        return 0.5
+      } else {
+        return -0.5
+      }
+    } else {
+      const result = Math.atan((point._y - this._y) / (point._x - this._x)) / Math.PI
+      if (point._x > this._x) {
+        return result
+      } else {
+        return 1 + result
+      }
+    }
   }
 
   getDistance(point) {

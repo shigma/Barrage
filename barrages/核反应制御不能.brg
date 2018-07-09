@@ -26,7 +26,7 @@ module.exports = {
           this.rho += Math.random() * 20 - 10
           this.theta += Math.random() / 8
           this.polarLocate()
-          this.theta += Math.random() / 16
+          this.theta += (Math.random() - 1 / 2) / 8
         },
         mutate(time, delta) {
           this.color = Color.rgba(1, 1, 1 - time / 16000, 1 - time / 8000)
