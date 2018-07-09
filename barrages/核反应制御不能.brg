@@ -1,5 +1,6 @@
 const Utility = require('../utility')
 const Barrage = require('../Barrage')
+const Color = require('../Color')
 
 module.exports = new Barrage({
   reference: {
@@ -30,13 +31,13 @@ module.exports = new Barrage({
           this.theta += Math.random() / 16
         },
         mutate(time, delta) {
-          this.color = Utility.rgba(1, 1, 1 - time / 16000, 1 - time / 8000)
-          this.bdColor = Utility.rgba(1, 1, 0.9, 1 - time / 4000)
-          this.glColor = Utility.rgba(1, 0.6, 0.6, time / 7200)
+          this.color = Color.rgba(1, 1, 1 - time / 16000, 1 - time / 8000)
+          this.bdColor = Color.rgba(1, 1, 0.9, 1 - time / 4000)
+          this.glColor = Color.rgba(1, 0.6, 0.6, time / 7200)
           this.movePolar((1 + time / 500) * delta / 32, this.theta)
         },
         display() {
-          const fdColor = Utility.rgba(0.8, 0.6, 1, 0)
+          const fdColor = Color.rgba(0.8, 0.6, 1, 0)
           const gradient = this.getGradient(fdColor, this.glColor, this.outerR)
           this.fillCircle(gradient, this.outerR)
           this.drawTemplate('border')

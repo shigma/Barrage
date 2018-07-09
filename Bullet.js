@@ -159,7 +159,7 @@ class Point extends UpdateObject {
     this.context.beginPath()
     this.context.arc(this.xabs, this.yabs, this.radius, 0, Math.PI * 2)
     this.context.closePath()
-    this.context.fillStyle = this.color
+    this.context.fillStyle = this.color.output ? this.color.output() : this.color
     this.context.fill()
   }
 

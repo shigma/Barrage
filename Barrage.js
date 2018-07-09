@@ -38,7 +38,7 @@ class Bullet extends Point {
     this.context.beginPath()
     this.context.arc(this.xabs, this.yabs, radius, 0, Math.PI * 2)
     this.context.closePath()
-    this.context.fillStyle = fill
+    this.context.fillStyle = fill.output ? fill.output() : fill
     this.context.fill()
   }
 
@@ -47,8 +47,8 @@ class Bullet extends Point {
       this.xabs, this.yabs, r1,
       this.xabs, this.yabs, r2
     )
-    gradient.addColorStop(0, c1)
-    gradient.addColorStop(1, c2)
+    gradient.addColorStop(0, c1.output ? c1.output() : c1)
+    gradient.addColorStop(1, c2.output ? c2.output() : c2)
     return gradient
   }
 }
