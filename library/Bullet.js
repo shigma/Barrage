@@ -81,7 +81,7 @@ Bullet.styles = {
   default: {
     events: {
       hitSelf() {
-        this.parent.ref.self.hp --
+        this.link.self.hp --
         this.destroy()
       },
       leave() {
@@ -146,6 +146,15 @@ Bullet.styles = {
       gradient.addColorStop(1, color.lighter(0.2).output())
       this.context.fillStyle = gradient
       this.context.fill()
+    },
+    listener: {
+      hitSelf() {
+        const theta = this.getTheta(this.link.self) - this.face
+        if (theta < -1 || theta > 1) return
+        const dist = this.getDistance(this.link.self)
+        const result = dist < this.width + this.link.self.radius // FIXME
+        if (result) return true
+      }
     }
   }
 }

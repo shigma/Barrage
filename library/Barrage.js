@@ -65,8 +65,10 @@ class Barrage extends UpdateObject {
 
     // Bind reference and display
     bullet.ref = {}
+    bullet.link = {}
     for (const key in this.ref) {
       bullet.ref[key] = this.ref[key].copy()
+      bullet.link[key] = this.ref[key]
     }
     bullet.mount(data.display)
 

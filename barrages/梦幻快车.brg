@@ -1,0 +1,83 @@
+const { Utility, Color } = API
+
+module.exports = {
+  reference: {
+    base: {
+      state: {
+        x: 240,
+        y: 160,
+        radius: 20,
+        color: 'yellow'
+      },
+      mounted() {
+        this.setInterval(2400, () => {
+          this.last = this.copy()
+          this.next = {
+            x: Utility.xTransfer(this.x, 200, 60, 100),
+            y: Math.random() * 40 + 140
+          }
+        })
+      },
+      mutate(time) {
+        if (time % 2400 > 1200) {
+          this.smooth(this.last, this.next, (time % 2400 - 1200) / 1200)
+        }
+      }
+    }
+  },
+
+  mounted() {
+    this.setInterval(800, () => {
+      this.emitBullets(32, (index) => ({
+        state: {
+          rho: 0,
+          radius: 15,
+          color: 'white',
+          style: 'border',
+          bdColor: 'maroon',
+          innerR: 12
+        },
+        mounted() {
+          const theta = Math.PI * index / 16
+          const phi = Math.PI * this.getTheta(this.ref.self)
+          this.vx = 5 * Math.sin(theta) * Math.cos(phi)
+                  - 6 * Math.cos(theta) * Math.sin(phi)
+          this.vy = 5 * Math.sin(theta) * Math.sin(phi)
+                  + 6 * Math.cos(theta) * Math.cos(phi)
+        },
+        mutate(time, delta) {
+          this.rho += (1 + time / 500) * delta / 60
+          this.x = this.rho * this.vx
+          this.y = this.rho * this.vy
+        }
+      }))
+    })
+    this.setInterval(2400, () => {
+      this.selfcopy = this.ref.self.copy()
+    })
+    this.setInterval(80, 15, 2400, () => {
+      this.emitBullets(9, (index) => ({
+        layer: 1,
+        state: {
+          rho: 0,
+          rate: 0,
+          radius: 6,
+          style: 'wedge',
+          length: 10,
+          width: 5
+        },
+        mounted(parent) {
+          this.color = Color.hsva(index * 2 / 9)
+          this.face = this.getTheta(parent.selfcopy)
+          this.movePolar(16 * (index - 4), 1 / 2 + this.face)
+          this.scale = 16 - Math.abs(index - 4)
+        },
+        mutate(time, delta) {
+          if (this.rate < 0.6) this.rate += delta / 1800
+          if (this.scale > 9) this.scale -= delta / 200
+          this.movePolar((1 + this.rate * this.scale) * delta / 30, this.face)
+        }
+      }))
+    })
+  }
+}
