@@ -1,240 +1,122 @@
-const Events = require('events')
+const Point = require('./point')
 
-class UpdateObject {
-  constructor(self, {events = {}, listener = {}} = {}) {
-    Object.assign(this, self)
-    this.events = new Events()
-    this.listener = listener
-    this.nextTick = []
-    this.interval = []
-    this.timeline = -1
-    this.timestamp = 0
-    for (const name in events) {
-      this.events.on(name, (result) => {
-        if (events[name] instanceof Function) {
-          events[name].call(this, result)
-        }
-      })
+class Bullet extends Point {
+  constructor(state, {events, listener}) {
+    const _events = Object.assign({}, Bullet.styles.default.events)
+    const _listener = Object.assign({}, Bullet.styles.default.listener)
+    if (state.style in Bullet.styles) {
+      Object.assign(_events, Bullet.styles[state.style].events)
+      Object.assign(_listener, Bullet.styles[state.style].listener)
     }
-  }
-
-  update(time) {
-    if (!this.birth) this.birth = time
-    time -= this.birth
-    this.timestamp = time
-    const delta = time - this.timeline
-
-    // nextTick
-    this.status = 'nextTick'
-    this._NextTick = []
-    this.nextTick.forEach((item) => {
-      const result = item.func.call(this, time, delta)
-      if (!result) item.birth = -1
+    super(state, {
+      events: Object.assign(_events, events),
+      listener: Object.assign(_listener, listener)
     })
-    this.nextTick = this.nextTick.filter(item => item.birth >= 0).concat(this._NextTick)
-
-    // Interval
-    this.status = 'interval'
-    this._Interval = []
-    this.interval.forEach(({args, birth}) => {
-      const time = this.timestamp - birth
-      const maxTime = args.length > 2 ? args[1] * args[0] : Infinity
-      const period = args.length > 3 ? time % args[2] : time
-      const start = args.length > 4 ? args[3] : 0
-      const getAge = stamp => Math.floor((stamp - birth) / args[0])
-      if (getAge(time) > getAge(this.timeline - birth) && period - start < maxTime) {
-        const iWave = Math.floor((period - start) / args[0])
-        const pWave = args.length > 3 ? Math.floor(time / args[2]) : 0
-        return args[args.length - 1](time, delta, iWave, pWave)
-      }
-    })
-    this.interval = this.interval.filter(item => item.birth >= 0).concat(this._Interval)
-
-    // Mutate
-    this.status = 'mutate'
-    if (this.mutate) this.mutate(time, delta)
-
-    // Listen
-    this.status = 'listen'
-    for (const name in this.listener) {
-      const result = this.listener[name].call(this, time, delta)
-      if (result) this.events.emit(name, result)
-    }
-
-    // Display
-    this.status = 'display'
-    if (this.display) this.display(time, delta)
-    this.timeline = time
-
-    if (this.nextTick.length > UpdateObject.maxNextTickCount) {
-      throw new Error(`Error: The amount of nextTicks (${this.nextTick.length}) is beyond the limit!`)
-    }
-    if (this.interval.length > UpdateObject.maxIntervalCount) {
-      throw new Error(`Error: The amount of intervals (${this.interval.length}) is beyond the limit!`)
-    }
+    if (this.rel === undefined) this.rel = 'base'
+    if (this.show === undefined) this.show = true
   }
 
-  // API
-  setNextTick(func) {
-    const birth = this.timestamp
-    if (this.status === 'nextTick') {
-      this._NextTick.push({ func, birth })
-    } else {
-      this.nextTick.push({ func, birth })
-    }
+  mount(display) {
+    this._display = display
+    if (this.mounted) this.mounted(this.parent)
   }
 
-  setInterval(...args) {
-    const id = Math.random() * 1e10
-    const birth = this.timestamp
-    if (this.status === 'interval') {
-      this._Interval.push({ id, args, birth })
-    } else {
-      this.interval.push({ id, args, birth })
-    }
-    return id
+  get _x() {
+    const rel = this.ref[this.rel] || {}
+    return this.x + (rel.x || 0)
   }
 
-  removeInterval(id) {
-    const index = this.interval.findIndex(item => item.id === id)
-    if (index) {
-      if (this.status === 'interval') {
-        this.interval[index].birth = -1
-      } else {
-        this.interval.splice(index, 1)
-      }
-      return true
-    }
-    return false
+  get _y() {
+    const rel = this.ref[this.rel] || {}
+    return this.y + (rel.y || 0)
   }
 
-  setTimeout(timeout, callback) {
-    timeout += this.timestamp
-    this.setNextTick(() => {
-      if (this.timeline < timeout && this.timestamp >= timeout) {
-        callback.call(this, this.timestamp, this.timestamp - this.timeline)
-      } else {
-        return true
-      }
-    })
-  }
-
-  trigger(key, ...args) {
-    return this.events.emit(key, ...args)
-  }
-}
-
-UpdateObject.maxNextTickCount = 64
-UpdateObject.maxIntervalCount = 16
-
-class Point extends UpdateObject {
-  constructor(...args) {
-    super(...args)
-    if (!this.x) this.x = 0
-    if (!this.y) this.y = 0
-    if (!this.rel) this.rel = 'base'
-    if (!this.ref) this.ref = {}
-  }
-
-  get xabs() {
-    const relative = this.ref[this.rel]
-    return this.x + (relative ? relative.x : 0)
-  }
-
-  get yabs() {
-    const relative = this.ref[this.rel]
-    return this.y + (relative ? relative.y : 0)
-  }
-
-  switchRel(rel) {
-    const relative = this.ref[this.rel]
-    this.x += relative.x - this.ref[rel].x
-    this.y += relative.y - this.ref[rel].y
-    this.rel = rel
-  }
-
-  display() {
-    if (!this.context) return
-    if (this.show === false) return
-    this.context.beginPath()
-    this.context.arc(this.xabs, this.yabs, this.radius, 0, Math.PI * 2)
-    this.context.closePath()
-    this.context.fillStyle = this.color.output ? this.color.output() : this.color
-    this.context.fill()
-  }
-
-  polarLocate(rho = this.rho, theta) {
-    theta = theta || this.theta + (this.ref.base ? (this.ref.base.theta || 0) : 0)
+  polarLocate(rho = this.rho, theta = this.theta) {
+    theta += ((this.ref[this.rel] || {}).face || 0)
     this.x = rho * Math.cos(Math.PI * theta)
     this.y = rho * Math.sin(Math.PI * theta)
   }
 
-  movePolar(rho = this.rho, theta = this.theta) {
-    this.x += rho * Math.cos(Math.PI * theta)
-    this.y += rho * Math.sin(Math.PI * theta)
-  }
-
-  getTheta(point) {
-    if (point.x === this.xabs) {
-      if (point.y >= this.yabs) {
-        return 0.5
-      } else {
-        return -0.5
-      }
+  display(time, delta) {
+    if (!this.show) return
+    if (this._display) {
+      this._display.call(this, time, delta)
     } else {
-      const result = Math.atan((point.y - this.yabs) / (point.x - this.xabs)) / Math.PI
-      if (point.x > this.xabs) {
-        return result
-      } else {
-        return 1 + result
+      
+      Bullet.styles[this.style || 'default'].display.call(this, time, delta)
+    }
+  }
+
+  destroy() {
+    const id = this.id
+    this.parent.setNextTick(function() {
+      const index = this.bullets.findIndex(bullet => bullet.id === id)
+      if (index) this.bullets.splice(index, 1)
+    })
+  }
+
+  drawTemplate(style) {
+    return Bullet.styles[style].display.call(this)
+  }
+
+  fillCircle(fill = this.color, radius = this.radius) {
+    this.context.beginPath()
+    this.context.arc(this._x, this._y, radius, 0, Math.PI * 2)
+    this.context.closePath()
+    this.context.fillStyle = fill.output ? fill.output() : fill
+    this.context.fill()
+  }
+
+  getGradient(c1, c2, r1, r2 = this.radius) {
+    const gradient = this.context.createRadialGradient(
+      this._x, this._y, r1,
+      this._x, this._y, r2
+    )
+    gradient.addColorStop(0, c1.output ? c1.output() : c1)
+    gradient.addColorStop(1, c2.output ? c2.output() : c2)
+    return gradient
+  }
+}
+
+Bullet.styles = {
+  default: {
+    events: {
+      hitSelf() {
+        this.parent.ref.self.hp --
+        this.destroy()
+      },
+      leave() {
+        this.destroy()
       }
+    },
+    listener: {
+      hitSelf() {
+        const self = this.ref.self.locate()
+        const dist = this.getDistance(self)
+        const result = dist < this.radius + self.radius
+        if (result) return true
+      },
+      border() {
+        return this._y < 0 || this._y > this.context.canvas.height
+          || this._x < 0 || this._x > this.context.canvas.width
+      },
+      leave() {
+        return this._x ** 2 + this._y ** 2 > 1e6
+      }
+    },
+    display() {
+      this.fillCircle()
     }
-  }
-
-  getDistance(point) {
-    return Math.sqrt((this.xabs - point.xabs) ** 2 + (this.yabs - point.yabs) ** 2)
-  }
-
-  copy() {
-    const _this = this
-    function locate() {
-      return Object.assign({}, _this, {locate})
+  },
+  border: {
+    display() {
+      const gradient = this.getGradient(this.color, this.bdColor, this.innerR || 0)
+      this.fillCircle(gradient)
     }
-    return locate()
+  },
+  wedge: {
+
   }
 }
 
-class Self extends Point {
-  initialize(context) {
-    if (context) this.context = context
-    this.x = this.context.canvas.width / 2
-    this.y = this.context.canvas.height / 8 * 7
-    this.keyState = {
-      ArrowLeft: false,
-      ArrowDown: false,
-      ArrowRight: false,
-      ArrowUp: false,
-      Shift: false
-    }
-    this.display()
-  }
-
-  mutate() {
-    const speed = this.v / Math.sqrt(
-      (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +
-      (this.keyState.ArrowLeft ^ this.keyState.ArrowRight) || 1
-    ) / (this.keyState.Shift ? 3 : 1)
-
-    this.x += speed * this.keyState.ArrowRight
-    this.x -= speed * this.keyState.ArrowLeft
-    this.y += speed * this.keyState.ArrowDown
-    this.y -= speed * this.keyState.ArrowUp
-    
-    if (this.x < 0) this.x = 0
-    if (this.y < 0) this.y = 0
-    if (this.x > this.context.canvas.width) this.x = this.context.canvas.width
-    if (this.y > this.context.canvas.height) this.y = this.context.canvas.height
-  }
-}
-
-module.exports = { UpdateObject, Point, Self }
+module.exports = Bullet

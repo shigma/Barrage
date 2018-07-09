@@ -2,10 +2,10 @@ const electron = require('electron')
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
-const { Self } = require('./library/Bullet')
-const { Barrage } = require('./library/Barrage')
-
+const Self = require('./library/self')
+const Barrage = require('./library/barrage')
 const MinFrame = 10
+
 global.API = {
   Utility: require('./library/utility'),
   Color: require('./library/Color')

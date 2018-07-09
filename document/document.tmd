@@ -97,14 +97,14 @@
 
 -----
 
-? trigger(*event*, *...args*)
+? triggerEvent(*event*, *...args*)
   触发一个名为*event*的事件的回调函数。
 
 >b 状态: 实验。此 API 可能会更改语法或被取代。
 
 - event: 事件的名称。
 - args: 事件附带的参数表（一般情况下只有 0 或者 1 个）。
-- 返回值: `true|false`，表示是否存在这个事件的回调函数。
+- 返回值: `true|false`，是这个事件的回调函数的返回值。
 
 ## 生命周期 ((Life Cycle))
 
@@ -130,13 +130,13 @@
 
 弹幕对象是一个 brg 文件的基础。它管理了一段时间内一批子弹的总和。
 
-? new Barrage({*reference*, *templates*, *mounted*, *mutate*, *events*, *listener*})
+? new Barrage({*reference*, *methods*, *mounted*, *mutate*, *events*, *listener*})
   构造一个新的弹幕对象。
 
 >g 状态: 稳定。此 API 将会一直存在。
 
 - reference: 弹幕对象中涉及的参考点对象。
-- templates: 要构造的弹幕对象的模板子弹表。
+- methods: 要构造的弹幕对象的一些方法。
 - mounted: 弹幕被挂载时触发的回调函数。
 - mutate: 弹幕每个更新周期的回调函数。带有 2 个参数：
   - time: 当前弹幕对象的时间戳。
@@ -158,14 +158,6 @@
   - 返回值: 要创建的子弹对象。
 - callback 也可以直接是子弹对象本身。
 
-? setTemplate(*key*, *template*)
-  新建或覆盖一个名为*key*的模板子弹。
-
->r 状态: 不建议。此 API 可能处于即将弃用的状态或存在较大的问题。
-
-- key: 模板的名字。
-- template: 模板子弹对象。也可以使用`null`以删除原来的模板子弹。
-
 ? setReference(*key*, *reference*)
   新建或覆盖一个名为*key*的参考点。
 
@@ -178,13 +170,12 @@
 
 大部分时候我们为了处理方便，我们并不需要直接调用点对象的构造函数，而是采用类点来声明一个参考点或子弹，而由弹幕对象来负责对应参考点和子弹的 create 和 mount 流程。因此我们需要介绍一下类点的声明语法。
 
-? {*layer*, *template*, *state*, *events*, *listener*, *mounted*, *mutate*, *display*}
+? {*layer*, *state*, *events*, *listener*, *mounted*, *mutate*, *display*}
   一个类点对象可能的基本属性。部分属性只能在构造子弹对象时使用。
 
 >g 状态: 稳定。此 API 将会一直存在。
 
 - layer: 子弹的图层编号。渲染时图层号更大的子弹会出现在更上方；图层号相同的子弹，后构造的子弹出现在更上方。图层号的默认值为`0`。
-- template: 子弹引用的模板点的名称。如果对应的模板点在之前已经被定义，那么这个子弹将以其为模板，其他的选项将依次覆盖模板中的选项。
 - state: 子弹或参考点的初始状态。详见下面的状态说明。
 - events: 子弹或参考点的事件回调列表。
 - listener: 子弹或参考点的监听器列表。
@@ -329,7 +320,7 @@
 
 Utility 库提供了其他的一些简单的 API，你可以使用下面的方法引入它：
 
-? const Utility = require('../Utility')
+? const { Utility } = API
 
 这个库提供了以下函数：
 
@@ -385,7 +376,7 @@ Utility 库提供了其他的一些简单的 API，你可以使用下面的方�
 
 Color 库提供了一些色彩相关的 API，你可以使用下面的方法引入它：
 
-? const Color = require('../Color')
+? const { Color } = API
 
 尽管 Color 是一个类，我们仍然建议使用 Color 的静态方法而不是构造函数来创建它的实例：
 
