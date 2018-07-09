@@ -114,7 +114,39 @@ Bullet.styles = {
     }
   },
   wedge: {
-
+    display() {
+      const c = Math.cos(Math.PI * this.face)
+      const s = Math.sin(Math.PI * this.face)
+      const x = this._x + this.length * c
+      const y = this._y + this.length * s
+      const x1 = this._x + this.width * s
+      const y1 = this._y - this.width * c
+      const x2 = this._x - this.width * s
+      const y2 = this._y + this.width * c
+      this.context.beginPath()
+      this.context.moveTo(x1, y1)
+      this.context.bezierCurveTo(
+        x1 + this.length * c / 2, y1 + this.length * s / 2,
+        x + this.width * s / 2, y - this.width * c / 2,
+      x, y)
+      this.context.bezierCurveTo(
+        x - this.width * s / 2, y + this.width * c / 2,
+        x2 + this.length * c / 2, y2 + this.length * s / 2,
+      x2, y2)
+      this.context.closePath()
+      const color = this.color
+      const gradient = this.context.createRadialGradient(
+        this._x, this._y, 0,
+        this._x, this._y, this.length
+      )
+      const ratio = this.width / this.length
+      gradient.addColorStop(0, color.lighter(0.2).output())
+      gradient.addColorStop(ratio / 2, color.alpha(0.4).output())
+      gradient.addColorStop((ratio + 1) / 2, color.output())
+      gradient.addColorStop(1, color.lighter(0.2).output())
+      this.context.fillStyle = gradient
+      this.context.fill()
+    }
   }
 }
 

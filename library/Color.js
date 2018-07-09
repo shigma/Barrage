@@ -10,51 +10,55 @@ class Color {
     this.r = r || 0
     this.g = g || 0
     this.b = b || 0
-    this.a = a || 0
+    this.a = a || 1
   }
 
   blend(color, prop = 0.5) {
-    this.r = this.r * (1 - prop) + color.r * prop
-    this.g = this.g * (1 - prop) + color.g * prop
-    this.b = this.b * (1 - prop) + color.b * prop
-    this.a = this.a * (1 - prop) + color.a * prop
-    return this
+    return new Color(
+      this.r * (1 - prop) + color.r * prop,
+      this.g * (1 - prop) + color.g * prop,
+      this.b * (1 - prop) + color.b * prop,
+      this.a * (1 - prop) + color.a * prop
+    )
   }
 
   darker(scale = 0.5) {
-    this.r *= 1 - scale
-    this.g *= 1 - scale
-    this.b *= 1 - scale
-    return this
+    return new Color(
+      this.r * (1 - scale),
+      this.g * (1 - scale),
+      this.b * (1 - scale),
+      this.a
+    )
   }
 
   lighter(scale = 0.5) {
-    this.r = 1 - (1 - this.r) * (1 - scale)
-    this.g = 1 - (1 - this.g) * (1 - scale)
-    this.b = 1 - (1 - this.b) * (1 - scale)
-    return this
+    return new Color(
+      1 - (1 - this.r) * (1 - scale),
+      1 - (1 - this.g) * (1 - scale),
+      1 - (1 - this.b) * (1 - scale),
+      this.a
+    )
   }
 
   inverse() {
-    this.r = 1 - this.r
-    this.g = 1 - this.g
-    this.b = 1 - this.b
-    return this
+    return new Color(
+      1 - this.r,
+      1 - this.g,
+      1 - this.b,
+      this.a
+    )
   }
 
   alpha(a) {
-    this.a = a
-    return this
+    return new Color(this.r, this.g, this.b, a)
   }
 
   opacify(scale) {
-    this.a = 1 - (1 - this.a) * (1 - scale)
-    return this
+    return new Color(this.r, this.g, this.b, 1 - (1 - this.a) * (1 - scale))
   }
 
   transparentize(scale) {
-    this.a *= 1 - scale
-    return this
+    return new Color(this.r, this.g, this.b, this.a * (1 - scale))
   }
 
   output() {
@@ -67,7 +71,7 @@ Object.assign(Color, {
     return new Color(r, g, b, a)
   },
 
-  hsla(h, s, l, a) {
+  hsla(h, s = 1, l = 1, a) {
     const tg = (h >= 0 ? h % 2 : h % 2 + 2) / 2
     const tr = tg + 1 / 3 > 1 ? tg - 2 / 3 : tg + 1 / 3
     const tb = tg - 1 / 3 > 0 ? tg - 1 / 3 : tg + 2 / 3
@@ -81,7 +85,7 @@ Object.assign(Color, {
     return new Color(convert(tr), convert(tg), convert(tb), a)
   },
 
-  hsva(h, s, v, a) {
+  hsva(h, s = 1, v = 1, a) {
     const k = h * 3
     const f = k - Math.floor(k)
     const p = v * (1 - s)
