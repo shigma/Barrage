@@ -4,7 +4,7 @@ module.exports = {
   reference: {
     base: {
       state: {
-        x: 200,
+        x: 240,
         y: 160,
         radius: 20,
         color: 'yellow'
@@ -15,7 +15,7 @@ module.exports = {
           this.lasty = this.y
           if (this.x < 160) {
             this.nextx = this.x + Math.random() * 60 + 60
-          } else if (this.x > 240) {
+          } else if (this.x > 320) {
             this.nextx = this.x - Math.random() * 60 - 60
           } else {
             this.nextx = this.x + (Math.random() * 40 + 40) * Utility.rpm()

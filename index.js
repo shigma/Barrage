@@ -132,7 +132,7 @@ new Vue({
   },
 
   template: `<div class="main">
-    <canvas class="left" ref="canvas" width="400" height="600"/>
+    <canvas ref="canvas" width="480" height="560"/>
     <div class="right" align="center" ref="div">
       <button @click="toggle" :class="{ disabled: !filename }">
         <div>{{ active ? 'Pause' : active === null ? 'Start' : 'Resume' }}</div>

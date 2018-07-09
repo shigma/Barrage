@@ -4,7 +4,7 @@ module.exports = {
   reference: {
     base: {
       state: {
-        x: 200,
+        x: 240,
         y: 160,
         show: false
       }

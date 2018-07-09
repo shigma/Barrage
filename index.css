@@ -14,19 +14,19 @@ body {
     font-family: source-san-sans-CN;
 }
 
-.left {
-    left: 0;
-    width: 50%;
-    top: 0;
-    height: 100%;
+canvas {
+    left: 40px;
+    width: 480px;
+    top: 20px;
+    height: 560px;
     position: absolute;
 }
 
 .right {
-    left: 50%;
-    width: 50%;
-    top: 0;
-    height: 100%;
+    left: 520px;
+    width: 280px;
+    top: 20px;
+    height: 560px;
     position: absolute;
 }
 
