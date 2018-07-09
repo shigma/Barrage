@@ -1,4 +1,3 @@
-const Utility = require('../utility')
 const Barrage = require('../Barrage')
 const Color = require('../Color')
 

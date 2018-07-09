@@ -1,4 +1,4 @@
-const { dialog, BrowserWindow } = require('electron').remote
+const electron = require('electron')
 const Vue = require('vue/dist/vue.common')
 Vue.config.productionTip = false
 
@@ -11,7 +11,7 @@ new Vue({
 
   data() {
     return {
-      docWindow: null,
+      docOpen: null,
       frameTime: 0,
       frameCount: 0,
       filename: '',
@@ -41,8 +41,7 @@ new Vue({
   },
 
   mounted() {
-    this.docWindow = null
-    this.barrages = []
+    this.barrage = null
     this.backgroundcolor = 'black'
     const canvas = this.$refs.canvas
     this.context = canvas.getContext('2d')
@@ -51,6 +50,10 @@ new Vue({
     this.self.initialize(this.context)
     addEventListener('keydown', event => this.self.keyState[event.key] = true)
     addEventListener('keyup', event => this.self.keyState[event.key] = false)
+    electron.ipcRenderer.send('mounted')
+    electron.ipcRenderer.on('message', (event, data) => {
+      this.docOpen = data.docOpen
+    })
   },
 
   methods: {
@@ -59,20 +62,18 @@ new Vue({
       barrage.mount(this.context)
       barrage.ref.self = this.self
       barrage.ref.self.inserted = true
-      this.barrages.push(barrage)
+      this.barrage = barrage
       return barrage.id
     },
     display(timestamp) {
       if (timestamp - this.frameTime > MinFrame) {
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
-        this.barrages.forEach((barrage) => {
-          try {
-            barrage.update(timestamp - this.stopTime)
-          } catch (error) {
-            console.error(error)
-          }
-        })
+        try {
+          this.barrage.update(timestamp - this.stopTime)
+        } catch (error) {
+          console.error(error)
+        }
         this.self.update()
         this.frameCount += 1
         this.frameTime = timestamp
@@ -93,7 +94,7 @@ new Vue({
       }
     },
     loadFile() {
-      dialog.showOpenDialog(null, {
+      electron.remote.dialog.showOpenDialog(null, {
         title: 'Load Barrage',
         properties: ['openFile'],
         filters: [
@@ -101,7 +102,7 @@ new Vue({
         ]
       }, (filepaths) => {
         if (filepaths) {
-          this.barrages = []
+          this.barrage = null
           if (this.active) {
             this.lastTime = performance.now()
             window.cancelAnimationFrame(this.active)
@@ -120,20 +121,7 @@ new Vue({
       })
     },
     showDocuments() {
-      if (!this.docWindow) {
-        this.docWindow = new BrowserWindow({
-          width: 800,
-          height: 600,
-          center: true,
-          backgroundColor: '#282828',
-          useContentSize: true,
-          autoHideMenuBar: true
-        })
-        this.docWindow.loadFile('document/index.html')
-        this.docWindow.on('closed', () => {
-          this.docWindow = null
-        })
-      }
+      electron.ipcRenderer.send('createDoc')
     }
   },
 
@@ -146,7 +134,7 @@ new Vue({
       <button @click="loadFile">
         <div>Load</div>
       </button>
-      <button @click="showDocuments" :class="{ disabled: docWindow }">
+      <button @click="showDocuments" :class="{ disabled: docOpen }">
         <div>Document</div>
       </button>
       <p>{{ filename || '未载入弹幕' }}</p>
