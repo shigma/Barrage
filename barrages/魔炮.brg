@@ -7,7 +7,7 @@ module.exports = {
         x: 240,
         y: 160,
         rho: 10,
-        radius: 20,
+        radius: 1,
         color: 'yellow',
         theta: 65 / 180,
         BI: 3000,
@@ -18,6 +18,7 @@ module.exports = {
   mounted() {
     this.setInterval(3000, () => {
       var clr ='white'
+      var delta = Math.atan((this.ref.self.x - 240) / (this.ref.self.y - 160))
       this.emitBullets({
         state: {
           radius: 10,
@@ -25,7 +26,7 @@ module.exports = {
           rho: 0,
           theta: 1,
           length: 0,
-          face: 0,
+          face: delta / Math.PI,
           x: 240,
           y: 160,
           BI: 3000
@@ -35,24 +36,68 @@ module.exports = {
           var BI = this.BI
           if (time % BI < 500){
             this.radius = 10
-            this.length = 1000 / 500 * (time % BI)
+            this.length = 20 + 1000 / 500 * (time % BI)
           }else if (time % BI < BI -500){
-            this.radius = 10 + 140 * (time % BI - 1000) / (BI - 1000)
-          }else if (time > BI){
-            //this.destroy()
+            this.radius = 20 + 80 * (time % BI - 500) / (BI - 1000)
+          }
+          if (time > BI){
+            this.destroy()
           }
         },
         display(){
-          var x = this.length * Math.sin(this.face * Math.PI)
-          var y = this.length * Math.cos(this.face * Math.PI)
-          this.context.strokeStyle = 'white'//this.color
-          this.context.lineWidth = 4//this.radius
+          var dr = this.radius
+          var dx = dr * Math.cos(this.face * Math.PI)
+          var drx = dr / 2 * Math.sin(this.face * Math.PI)
+          var dy = dr * Math.sin(this.face * Math.PI)
+          var dry = dr / 2 * Math.cos(this.face * Math.PI)
+          var x = (this.length - dr) * Math.sin(this.face * Math.PI)
+          var y = (this.length - dr) * Math.cos(this.face * Math.PI)
+          this.context.strokeStyle = this.color
+          this.context.lineWidth = 1
           this.context.beginPath()
           this.context.moveTo(this.x, this.y)
-          this.context.lineTo(this.x + x, this.y + y)
+          this.context.arcTo(this.x - 2 * dx / 3, this.y + 2 * dy / 3,
+             this.x - dx + drx, this.y + dy + dry, 2 * dr / Math.sqrt(3))
+          this.context.lineTo(this.x - dx + drx + x, this.y + dy + dry + y)
+          this.context.lineTo(this.x + dx + drx + x, this.y - dy + dry + y)
+          this.context.lineTo(this.x + dx + drx, this.y - dy + dry)
+          this.context.arcTo(this.x + 2 * dx / 3, this.y - 2 * dy / 3,
+            this.x, this.y, 2 * dr / Math.sqrt(3))
           this.context.closePath()
-          //this.context.fillRect(this.x, this.y, 10, y)
-          console.log((this.x+x)+','+(this.y+y))
+          var gradient = this.context.createLinearGradient(
+            this.x - dx + drx, this.y + dy + dry,
+            this.x + dx + drx, this.y - dy + dry)//this.x, this.y, this.x + dx, this.y + dy);
+          gradient.addColorStop(0,'black')
+          gradient.addColorStop(0.25,this.color)
+          gradient.addColorStop(0.75,this.color)
+          gradient.addColorStop(1,'black')
+          this.context.fillStyle = gradient
+          this.context.fill()
+        },
+        events:{
+          hitSelf(){
+            this.link.self.hp--
+          }
+        },
+        listener:{
+          hitSelf(){
+            const self = this.link.self
+            const r = 2 / Math.sqrt(3) * this.radius
+            const d1 = Math.sqrt((self.x - this.x)**2 + (self.y - this.y)**2)
+            const d2 = Math.sqrt(
+               (self.x - (this.x + r * Math.sin(this.face * Math.PI)))**2
+             + (self.y - (this.y + r * Math.cos(this.face * Math.PI)))**2)
+            const theta1 = Math.atan((self.x - this.x) / (self.y - this.y)) - this.face * Math.PI
+            const d3 = Math.abs(d1 * Math.sin(theta1))
+            //console.log(d1,d2,theta1,d3)
+            //console.log(Math.atan((self.x - this.x) / (self.y - this.y))-this.face*Math.PI)
+            if (this.radius < 50)return false
+            if (d3 < this.radius){
+              if (d2 < r || (d2 > r && d1 > r)){
+                return true
+              }
+            }return false
+          }
         }
       })
     })
