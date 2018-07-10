@@ -290,7 +290,7 @@
 
 -----
 
-? getGradient(*color1*, *color2*, *radius1*, *radius2*)
+? getGradient(*color1*, *radius1*, *color2*, *radius2*)
   获得一种中心渐变色。
 
 >b 状态: 实验。此 API 可能会更改语法或被取代。

@@ -67,6 +67,8 @@ class Color {
 }
 
 Object.assign(Color, {
+  transparent: new Color(0, 0, 0, 0),
+
   rgba(r, g, b, a) {
     return new Color(r, g, b, a)
   },

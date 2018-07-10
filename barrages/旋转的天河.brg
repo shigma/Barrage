@@ -96,7 +96,7 @@ module.exports = {
                     display() {
                         const fadeColor = Color.rgba(0.93, 0.93, 0.93, 0)
                         const glowColor = Color.rgba(0.86, 0.86, 0.86, 0.4)
-                        const gradient = this.getGradient(fadeColor, glowColor, this.outerR)
+                        const gradient = this.getGradient(fadeColor, this.outerR, glowColor)
                         this.fillCircle(gradient, this.outerR)
                         this.drawTemplate("border")
                     }

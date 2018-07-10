@@ -36,7 +36,7 @@ module.exports = {
         },
         display() {
           const fdColor = Color.rgba(0.8, 0.6, 1, 0)
-          const gradient = this.getGradient(fdColor, this.glColor, this.outerR)
+          const gradient = this.getGradient(fdColor, this.outerR, this.glColor)
           this.fillCircle(gradient, this.outerR)
           this.drawTemplate('border')
         }
