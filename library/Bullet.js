@@ -1,5 +1,4 @@
 const Point = require('./point')
-const Coordinate = require('./coordinate')
 
 class Bullet extends Point {
   constructor(state, {events, listener}) {
