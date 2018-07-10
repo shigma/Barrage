@@ -9,16 +9,15 @@ module.exports = {
         rho: 10,
         radius: 20,
         color: 'yellow',
-        theta: 65 / 180
+        theta: 65 / 180,
+        BI: 3000,
       }
     }
   },
 
   mounted() {
-    this.setInterval(this.BI, () => {
-      console.log('emit')
+    this.setInterval(3000, () => {
       var clr ='white'
-      var delta = Math.random()
       this.emitBullets({
         state: {
           radius: 10,
@@ -27,31 +26,33 @@ module.exports = {
           theta: 1,
           length: 0,
           face: 0,
-          x: 0,
-          y: 0,
-          BI: this.BI
+          x: 240,
+          y: 160,
+          BI: 3000
         },
         mutate(time) {
-          console.log('mutate',this.ref)
-          var BI = this.ref.base.BI
+          //console.log('mutate',this.ref)
+          var BI = this.BI
           if (time % BI < 500){
             this.radius = 10
             this.length = 1000 / 500 * (time % BI)
           }else if (time % BI < BI -500){
             this.radius = 10 + 140 * (time % BI - 1000) / (BI - 1000)
           }else if (time > BI){
-            this.destroy()
+            //this.destroy()
           }
         },
         display(){
           var x = this.length * Math.sin(this.face * Math.PI)
           var y = this.length * Math.cos(this.face * Math.PI)
-          this.context.fillStyle = this.color
+          this.context.strokeStyle = 'white'//this.color
+          this.context.lineWidth = 4//this.radius
+          this.context.beginPath()
           this.context.moveTo(this.x, this.y)
-          this.context.lineWidth(this.radius)
           this.context.lineTo(this.x + x, this.y + y)
-          this.context.fillRect(this.x, this.y, x, y)
-          // console.log(this.x+','+this.y)
+          this.context.closePath()
+          //this.context.fillRect(this.x, this.y, 10, y)
+          console.log((this.x+x)+','+(this.y+y))
         }
       })
     })
