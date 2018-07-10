@@ -20,6 +20,7 @@ module.exports = {
       var clr ='white'
       var delta = Math.atan((this.ref.self.x - 240) / (this.ref.self.y - 160))
       this.emitBullets({
+        layer: 0,
         state: {
           radius: 10,
           color: clr,
@@ -89,8 +90,6 @@ module.exports = {
              + (self.y - (this.y + r * Math.cos(this.face * Math.PI)))**2)
             const theta1 = Math.atan((self.x - this.x) / (self.y - this.y)) - this.face * Math.PI
             const d3 = Math.abs(d1 * Math.sin(theta1))
-            //console.log(d1,d2,theta1,d3)
-            //console.log(Math.atan((self.x - this.x) / (self.y - this.y))-this.face*Math.PI)
             if (this.radius < 50)return false
             if (d3 < this.radius){
               if (d2 < r || (d2 > r && d1 > r)){
@@ -100,6 +99,28 @@ module.exports = {
           }
         }
       })
+    })
+    this.setInterval(250, () => {
+      var num = 7
+      var col = Utility.rgb(Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3, Math.random() * 0.7 + 0.3)
+      this.emitBullets(num,(index) => ({
+        layer: 1,
+        state:{
+          radius: 10,
+          color: col,
+          x: 240,
+          y: 160,
+          ax: Math.random() * 8 - 4,
+          ay: Math.random() * 8 - 4,
+          vx: Math.random() * 10 - 5,
+          vy: Math.random() * 10 - 5,
+        },
+        mutate(time){
+          var t = time / 200
+          this.x = 0 + this.vx * t + this.ax * t * t / 2
+          this.y = 0 + this.vy * t + this.ay * t * t / 2
+        }
+      }))
     })
   }
 }
