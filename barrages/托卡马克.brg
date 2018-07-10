@@ -1,0 +1,93 @@
+const { Color } = API
+
+module.exports = {
+  methods: {
+    setRef(id, dir) {
+      this.setReference('base' + id, {
+        state: {
+          x: 240,
+          y: 280,
+          radius: 20,
+          innerR: 10,
+          outerR: 32,
+          dir: dir,
+          phase: 0,
+          phaseTime: 0,
+          crColor: Color.rgba(1, 1, 1, 0.8),
+          bdColor: Color.rgba(1, 0.6, 0.55, 0.4),
+          glColor: Color.rgba(1, 0.2, 0.2, 0.6)
+        },
+        mutate(time, delta) {
+          time -= this.phaseTime
+          if (this.phase === 0) {
+            this.y += delta * (time + 1000) / 6000 * this.dir
+          } else if (this.phase === 1) {
+            this.radius += delta * (time + 1000) / 8000
+            this.innerR += delta * (time + 1000) / 16000
+            this.outerR += delta * (time + 1000) / 6000
+            this.bdColor = Color.rgba(1,
+              0.6 + this.radius / 1250,
+              0.55 + this.radius / 1000,
+              0.4 - this.radius / 2500)
+            this.glColor = Color.rgba(1,
+              0.2 + this.radius / 1250,
+              0.2 + this.radius / 1250,
+              0.6 + this.radius / 2500)
+          } else {
+            this.triggerEventOnce('emit')
+          }
+        },
+        display() {
+          let gradient
+          gradient = this.getGradient(
+            Color.transparent, this.outerR,
+            this.glColor, this.radius)
+          this.fillCircle(gradient, this.outerR)
+          gradient = this.getGradient(
+            this.crColor, this.innerR,
+            this.bdColor, this.radius)
+          this.fillCircle(gradient)
+        },
+        listener: {
+          nextPhase() {
+            if (this.phase === 0) {
+              return this.y > this.context.canvas.height || this.y < 0
+            } else if (this.phase === 1) {
+              return this.radius > 250
+            }
+          }
+        },
+        events: {
+          nextPhase() {
+            this.phaseTime = this.timestamp
+            this.phase += 1
+          },
+          emit() {
+            this.setInterval(300, () => {
+              this.emitBullets(50, (index) => ({
+                state: {
+                  rho: 0,
+                  theta: index / 25,
+                  radius: 6,
+                  color: Color.rgba(1, 1, 1, 0.8),
+                  rel: 'src',
+                  glColor: Color.rgba(1, 0, 0, 0),
+                  innerR: 3
+                },
+                mutate(time, delta) {
+                  this.rho += (1 + time / 500) * delta / 20
+                  this.theta -= delta / 10000
+                  this.polarLocate()
+                }
+              }))
+            })
+          }
+        }
+      })
+    }
+  },
+  mounted() {
+    this.setRef(1, 1)
+    this.setRef(2, -1)
+  }
+}
