@@ -9,11 +9,7 @@ module.exports = {
         rho: 10,
         radius: 20,
         color: 'yellow',
-        theta: 65 / 180,
-        BI: 3000,//500+2000+500
-      },
-      mutate() {
-
+        theta: 65 / 180
       }
     }
   },
@@ -31,6 +27,9 @@ module.exports = {
           theta: 1,
           length: 0,
           face: 0,
+          x: 0,
+          y: 0,
+          BI: this.BI
         },
         mutate(time) {
           console.log('mutate',this.ref)
@@ -51,8 +50,8 @@ module.exports = {
           this.context.moveTo(this.x, this.y)
           this.context.lineWidth(this.radius)
           this.context.lineTo(this.x + x, this.y + y)
-          this.context.fillRect(this.x,this.y,x,y)
-          console.log(this.x+','+this.y)
+          this.context.fillRect(this.x, this.y, x, y)
+          // console.log(this.x+','+this.y)
         }
       })
     })

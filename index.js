@@ -83,9 +83,9 @@ new Vue({
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
         try {
-          console.log('index',this.barrage.ref)
           this.barrage.update(timestamp - this.stopTime)
         } catch (error) {
+          this.error = error
           console.error(error)
         }
         this.self.update()
@@ -160,7 +160,7 @@ new Vue({
       <p>{{ title }}</p>
       <p>生命: {{ self.hp || 0 }}</p>
       <p>帧率: {{ frameRate }}</p>
-      <p v-if="error">{{ error }}</p>
+      <p v-if="error">Error</p>
     </div>
   </div>`
 })

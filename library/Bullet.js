@@ -1,5 +1,4 @@
 const Point = require('./point')
-const Coordinate = require('./coordinate')
 
 class Bullet extends Point {
   constructor(state, {events, listener}) {
@@ -92,7 +91,6 @@ Bullet.styles = {
     listener: {
       hitSelf() {
         const self = this.link.self
-        console.log(this,self)
         return (this._x - self._x) ** 2 + (this._y - self._y) ** 2 <
           (this.radius + self.radius) ** 2
       },
