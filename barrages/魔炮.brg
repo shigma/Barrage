@@ -1,0 +1,59 @@
+const { Utility } = API
+
+module.exports = {
+  reference: {
+    base: {
+      state: {
+        x: 240,
+        y: 160,
+        rho: 10,
+        radius: 20,
+        color: 'yellow',
+        theta: 65 / 180,
+        BI: 3000,//500+2000+500
+      },
+      mutate() {
+
+      }
+    }
+  },
+
+  mounted() {
+    //this.setInterval(this.BI, () => {
+      console.log('emit')
+      var clr ='white'
+      var delta = Math.random()
+      this.emitBullets({
+        state: {
+          radius: 10,
+          color: clr,
+          rho: 0,
+          theta: 1,
+          length: 0,
+          face: 0,
+        },
+        mutate(time) {
+          console.log('check')
+          if (time % this.BI < 500){
+            this.radius = 10
+            this.length = 1000 / 500 * (time % this.BI)
+          }else if(time % this.BI < this.BI -500){
+            this.radius = 10 + 140 * (time % this.BI - 1000) / (this.BI - 1000)
+          }else{
+            //still part
+          }
+        },
+        display(){
+          var x = this.length * Math.sin(this.face)
+          var y = this.length * Math.cos(this.face)
+          this.context.fillStyle = this.color
+          this.context.moveTo(this.x, this.y)
+          this.lineWidth(this.radius)
+          this.context.lineTo(this.x + x, this.y + y)
+          this.context.fillRect(this.x,this.y,x,y)
+          console.log(this.x+','+this.y)
+        }
+      })
+    //})
+  }
+}
