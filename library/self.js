@@ -31,6 +31,11 @@ class Self extends Point {
     if (this.x > this.context.canvas.width) this.x = this.context.canvas.width
     if (this.y > this.context.canvas.height) this.y = this.context.canvas.height
   }
+
+  display() {
+    const gradient = this.getGradient('white', this.radius / 2)
+    this.fillCircle(gradient)
+  }
 }
 
 module.exports = Self

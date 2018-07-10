@@ -50,7 +50,7 @@ class Bullet extends Point {
     const id = this.id
     this.parent.setNextTick(function() {
       const index = this.bullets.findIndex(bullet => bullet.id === id)
-      if (index) this.bullets.splice(index, 1)
+      if (index >= 0) this.bullets.splice(index, 1)
     })
   }
 
