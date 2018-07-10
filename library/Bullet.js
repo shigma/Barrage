@@ -55,7 +55,9 @@ class Bullet extends Point {
   }
 
   drawTemplate(style) {
-    return Bullet.styles[style].display.call(this)
+    if (style in Bullet.styles) {
+      return Bullet.styles[style].display.call(this)
+    }
   }
 }
 
@@ -92,6 +94,13 @@ Bullet.styles = {
     display() {
       const gradient = this.getGradient(this.color, this.innerR || 0, this.bdColor)
       this.fillCircle(gradient)
+    }
+  },
+  glow: {
+    display() {
+      const gradient = this.getGradient('rgba(0,0,0,0)', this.outerR, this.glColor)
+      this.fillCircle(gradient, this.outerR)
+      this.fillCircle(this.color, this.radius)
     }
   },
   wedge: {

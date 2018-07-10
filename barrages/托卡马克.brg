@@ -2,6 +2,7 @@ const { Color } = API
 
 module.exports = {
   methods: {
+    // 共有 2 个类似的发射源，使用函数可以避免重复的代码
     setRef(id, dir) {
       this.setReference('base' + id, {
         state: {
@@ -10,31 +11,34 @@ module.exports = {
           radius: 20,
           innerR: 10,
           outerR: 32,
-          dir: dir,
-          phase: 0,
+          dir: dir, // 运动方向
+          phase: 0, // 将会使用事件管理阶段
           phaseTime: 0,
           crColor: Color.rgba(1, 1, 1, 0.8),
-          bdColor: Color.rgba(1, 0.6, 0.55, 0.4),
+          bdColor: Color.rgba(1, 0.6, 0.4, 0.4),
           glColor: Color.rgba(1, 0.2, 0.2, 0.6)
         },
         mutate(time, delta) {
-          time -= this.phaseTime
+          time -= this.phaseTime // 将 time 设为当前阶段的时间
           if (this.phase === 0) {
             this.y += delta * (time + 1000) / 6000 * this.dir
           } else if (this.phase === 1) {
+            if (this.innerR > 50) {
+              this.triggerEventOnce('emit') // 这个只会触发一次
+            }
+            // 在两种状态间平滑地过渡
             this.radius += delta * (time + 1000) / 8000
             this.innerR += delta * (time + 1000) / 16000
             this.outerR += delta * (time + 1000) / 6000
+            this.crColor = Color.rgba(1, 1, 1, 0.8 + this.radius / 625)
             this.bdColor = Color.rgba(1,
               0.6 + this.radius / 1250,
-              0.55 + this.radius / 1000,
+              0.4 + this.radius / 1250,
               0.4 - this.radius / 2500)
             this.glColor = Color.rgba(1,
               0.2 + this.radius / 1250,
               0.2 + this.radius / 1250,
-              0.6 + this.radius / 2500)
-          } else {
-            this.triggerEventOnce('emit')
+              0.6 + this.radius / 1250)
           }
         },
         display() {
@@ -50,6 +54,7 @@ module.exports = {
         },
         listener: {
           nextPhase() {
+            // 进入下个阶段的条件
             if (this.phase === 0) {
               return this.y > this.context.canvas.height || this.y < 0
             } else if (this.phase === 1) {
@@ -59,24 +64,44 @@ module.exports = {
         },
         events: {
           nextPhase() {
+            // 记录下个阶段的开始时间
             this.phaseTime = this.timestamp
             this.phase += 1
           },
-          emit() {
-            this.setInterval(300, () => {
+          emit(time) {
+            this.setInterval(600, () => {
+              // 由 ref 来负责发射子弹
+              // 当然这部分也可以通过主程序中的 setTimeout 或者事件实现
               this.emitBullets(50, (index) => ({
                 state: {
-                  rho: 0,
-                  theta: index / 25,
-                  radius: 6,
-                  color: Color.rgba(1, 1, 1, 0.8),
+                  // 由点对象产生的子弹会自动带有一个名为 src 的 rel
+                  // 这个 src 会自动绑定产生它的点对象在它诞生时的位置
                   rel: 'src',
-                  glColor: Color.rgba(1, 0, 0, 0),
-                  innerR: 3
+                  radius: 6,
+                  stage: 0, // 不使用事件管理也是可以的
+                  stageTime: 0,
+                  color: Color.rgba(1, 1, 1, 0.8)
+                },
+                mounted() {
+                  // 固定弹变为自机相关
+                  this.theta = index / 25 + this.getTheta(this.ref.self)
                 },
                 mutate(time, delta) {
-                  this.rho += (1 + time / 500) * delta / 20
-                  this.theta -= delta / 10000
+                  time -= this.stageTime
+                  if (this.stage < 3) {
+                    this.rho = 100
+                      + (this.stage * 40 + 60) * Math.sin(Math.PI * time / 2000)
+                    if (time > 2000) {
+                      this.stage += 1
+                      this.stageTime = time
+                      this.rho = 100
+                      // 重新设置 rho，为的是最后一次能够正常发射
+                    }
+                  } else {
+                    this.rho += (1 + time / 1600) * delta / 40
+                  }
+                  // 保持转动
+                  this.theta += delta / 12000
                   this.polarLocate()
                 }
               }))
@@ -87,6 +112,7 @@ module.exports = {
     }
   },
   mounted() {
+    // 真正的主程序
     this.setRef(1, 1)
     this.setRef(2, -1)
   }
