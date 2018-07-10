@@ -57,24 +57,6 @@ class Bullet extends Point {
   drawTemplate(style) {
     return Bullet.styles[style].display.call(this)
   }
-
-  fillCircle(fill = this.color, radius = this.radius) {
-    this.context.beginPath()
-    this.context.arc(this._x, this._y, radius, 0, Math.PI * 2)
-    this.context.closePath()
-    this.context.fillStyle = fill.output ? fill.output() : fill
-    this.context.fill()
-  }
-
-  getGradient(c1, c2, r1, r2 = this.radius) {
-    const gradient = this.context.createRadialGradient(
-      this._x, this._y, r1,
-      this._x, this._y, r2
-    )
-    gradient.addColorStop(0, c1.output ? c1.output() : c1)
-    gradient.addColorStop(1, c2.output ? c2.output() : c2)
-    return gradient
-  }
 }
 
 Bullet.styles = {
@@ -108,7 +90,7 @@ Bullet.styles = {
   },
   border: {
     display() {
-      const gradient = this.getGradient(this.color, this.bdColor, this.innerR || 0)
+      const gradient = this.getGradient(this.color, this.innerR || 0, this.bdColor)
       this.fillCircle(gradient)
     }
   },

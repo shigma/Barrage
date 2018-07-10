@@ -120,6 +120,7 @@ new Vue({
     },
     parseFile(filepath) {
       this.barrage = null
+      this.error = ''
       if (this.active) {
         this.lastTime = performance.now()
         window.cancelAnimationFrame(this.active)

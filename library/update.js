@@ -115,6 +115,14 @@ class UpdateObject {
       return this.events[key].call(this, ...args)
     }
   }
+
+  triggerEventOnce(key, ...args) {
+    if (key in this.events) {
+      const result = this.events[key].call(this, ...args)
+      delete this.events[key]
+      return result
+    }
+  }
 }
 
 UpdateObject.nextTickLimit = 128

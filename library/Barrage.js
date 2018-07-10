@@ -57,17 +57,20 @@ class Barrage extends UpdateObject {
   setReference(key, data) {
     const point = this.parsePoint(Point, data)
     if (point.mounted) point.mounted.call(point, this)
+    if (data.display) point.display = function(time, delta) {
+      if (this.show !== false) data.display.call(this, time, delta)
+    }
     this.ref[key] = point
   }
 
   pushBullet(data) {
     const bullet = this.parsePoint(Bullet, data)
+
     // Bind reference and display
     bullet.ref = {}
-    bullet.link = {}
+    bullet.link = Object.assign({}, this.ref)
     for (const key in this.ref) {
       bullet.ref[key] = this.ref[key].copy()
-      bullet.link[key] = this.ref[key]
     }
     bullet.mount(data.display)
 
@@ -96,7 +99,7 @@ class Barrage extends UpdateObject {
   }
 }
 
-Barrage.maxBulletCount = 1024
+Barrage.maxBulletCount = 2048
 
 Barrage.callback = {}
 
