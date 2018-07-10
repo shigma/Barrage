@@ -1,0 +1,107 @@
+// Kouchya的弹幕练习(III)
+
+const { Color } = API
+
+module.exports = {
+    reference: {
+        base: {
+            state: {
+                x: 240,
+                y: 280,
+                radius: 15,
+                color: Color.rgba(0.9, 0.9, 0.9, 0.8)
+            }
+        },
+        base2: {
+            state: {
+                x: 0,
+                y: 0,
+                radius: 15,
+                color: Color.rgba(1, 1, 1, 0)
+            }
+        }
+    },
+
+    mounted() {
+        this.setInterval(16000, () => {
+            this.emitBullets(120, (index) => ({
+                state: {
+                    theta: index / 60,
+                    radius: 8,
+                    style: "border",
+                    bdColor: Color.hsva(1, 0.56, 0.94, 0),
+                    color: "white",
+                    thickness: 4
+                },
+
+                mutate(time, delta) {
+                    if (time < 4000) {
+                        this.rho = time / 1000 * 60 * Math.sin(18 * this.theta)
+                        //this.rho = 160 * Math.sin(12 * this.theta)
+                    } else {
+                        this.rho += 0.015 * delta
+                        this.theta -= delta / 6000
+                        this.bdColor = Color.hsva(2 - Math.cos(Math.PI / 6000 * (time - 6000)), 0.56, 0.94, 0)
+                    }
+                    this.polarLocate()
+                }
+            }))
+        })
+        this.setTimeout(2000, () => {
+            this.setInterval(16000, () => {
+                this.emitBullets(48, (index) => ({
+                    layer: -1,
+                    state: {
+                        rel: "base2",
+                        radius: 6,
+                        color: "white",
+                        outerR: 10
+                    },
+
+                    mounted() {
+                        var colors = new Array(
+                            Color.rgba(0.5, 0.5, 0.5, 0.63),
+                            Color.rgba(0.72, 0.72, 0.72, 0.6),
+                            Color.rgba(0.65, 0.65, 0.65, 0.6),
+                            Color.rgba(0.4, 0.4, 0.4, 0.7),
+                            Color.rgba(0.56, 0.56, 0.56, 0.6)
+                        )
+                        this.bdColor = colors[Math.floor(Math.random() * 5)]
+                        var minarg
+                        if (index < 11) {
+                            this.x = (index + 1) * 40
+                            this.y = -8
+                            minarg = 1 / 6 + index / 30
+                        } else if (index < 24) {
+                            this.x = 488
+                            this.y = (index - 10) * 40
+                            minarg = 2 / 3 + (index - 11) / 36
+                        } else if (index < 35) {
+                            this.x = 480 - (index - 23) * 40
+                            this.y = 568
+                            minarg = 7 / 6 + (index - 24) / 30
+                        } else {
+                            this.x = -8
+                            this.y = 560 - (index - 34) * 40
+                            minarg = 5 / 3 + (index - 35) / 36
+                        }
+                        this.arg = Math.random() / 3 + minarg
+                    },
+
+                    mutate(time, delta) {
+                        this.x += 50 * Math.cos(Math.PI * this.arg) * delta / 1000
+                        this.y += 50 * Math.sin(Math.PI * this.arg) * delta / 1000
+                    },
+
+                    display() {
+                        const fadeColor = Color.rgba(0.93, 0.93, 0.93, 0)
+                        const glowColor = Color.rgba(0.86, 0.86, 0.86, 0.4)
+                        const gradient = this.getGradient(fadeColor, glowColor, this.outerR)
+                        this.fillCircle(gradient, this.outerR)
+                        this.drawTemplate("border")
+                    }
+                }))
+            })
+        })
+    }
+}
