@@ -62,7 +62,7 @@ class Barrage extends UpdateObject {
 
   pushBullet(data) {
     const bullet = this.parsePoint(Bullet, data)
-
+    console.log(this.ref)
     // Bind reference and display
     bullet.ref = {}
     bullet.link = {}

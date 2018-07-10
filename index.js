@@ -83,6 +83,7 @@ new Vue({
         this.context.fillStyle = this.backgroundcolor
         this.context.fillRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
         try {
+          console.log('index',this.barrage.ref)
           this.barrage.update(timestamp - this.stopTime)
         } catch (error) {
           console.error(error)
