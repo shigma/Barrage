@@ -7,10 +7,10 @@ function to256(scale) {
 
 class Color {
   constructor(r, g, b, a) {
-    this.r = r || 0
-    this.g = g || 0
-    this.b = b || 0
-    this.a = a || 1
+    this.r = r === undefined ? 0 : r
+    this.g = g === undefined ? 0 : g
+    this.b = b === undefined ? 0 : b
+    this.a = a === undefined ? 1 : a
   }
 
   blend(color, prop = 0.5) {

@@ -1,4 +1,5 @@
 const Point = require('./point')
+const Coordinate = require('./coordinate')
 
 class Bullet extends Point {
   constructor(state, {events, listener}) {
@@ -90,10 +91,9 @@ Bullet.styles = {
     },
     listener: {
       hitSelf() {
-        const self = this.ref.self.locate()
-        const dist = this.getDistance(self)
-        const result = dist < this.radius + self.radius
-        if (result) return true
+        const self = this.link.self
+        return (this._x - self._x) ** 2 + (this._y - self._y) ** 2 <
+          (this.radius + self.radius) ** 2
       },
       border() {
         return this._y < 0 || this._y > this.context.canvas.height
@@ -115,24 +115,17 @@ Bullet.styles = {
   },
   wedge: {
     display() {
-      const c = Math.cos(Math.PI * this.face)
-      const s = Math.sin(Math.PI * this.face)
-      const x = this._x + this.length * c
-      const y = this._y + this.length * s
-      const x1 = this._x + this.width * s
-      const y1 = this._y - this.width * c
-      const x2 = this._x - this.width * s
-      const y2 = this._y + this.width * c
+      const coord = this.copy()
       this.context.beginPath()
-      this.context.moveTo(x1, y1)
+      this.context.moveTo(...coord.resolve(0, -this.width))
       this.context.bezierCurveTo(
-        x1 + this.length * c / 2, y1 + this.length * s / 2,
-        x + this.width * s / 2, y - this.width * c / 2,
-      x, y)
+        ...coord.resolve(this.length / 2, -this.width),
+        ...coord.resolve(this.length, -this.width / 2),
+        ...coord.resolve(this.length, 0))
       this.context.bezierCurveTo(
-        x - this.width * s / 2, y + this.width * c / 2,
-        x2 + this.length * c / 2, y2 + this.length * s / 2,
-      x2, y2)
+        ...coord.resolve(this.length, this.width / 2),
+        ...coord.resolve(this.length / 2, this.width),
+        ...coord.resolve(0, this.width))
       this.context.closePath()
       const color = this.color
       const gradient = this.context.createRadialGradient(
@@ -149,11 +142,27 @@ Bullet.styles = {
     },
     listener: {
       hitSelf() {
-        const theta = this.getTheta(this.link.self) - this.face
-        if (theta < -1 || theta > 1) return
-        const dist = this.getDistance(this.link.self)
-        const result = dist < this.width + this.link.self.radius // FIXME
-        if (result) return true
+        const pos = this.copy().locate(this.link.self)
+        const r = this.link.self.radius
+        if (pos.x > 0) {
+          const x = pos.x - r * Math.cos(pos.theta)
+          const y = pos.y - r * Math.sin(pos.theta)
+          return (x / this.length) ** 2 + (y / this.width) ** 2 < 1
+        } else if (pos.x > -r) {
+          if (pos.y > this.width + r) {
+            return false
+          } else if (pos.y > this.width) {
+            return pos.x ** 2 + (pos.y - this.width) ** 2 < r ** 2
+          } else if (pos.y > -this.width) {
+            return true
+          } else if (pos.y > -this.width - r) {
+            return pos.x ** 2 + (pos.y + this.width) ** 2 < r ** 2
+          } else {
+            return false
+          }
+        } else {
+          return false
+        }
       }
     }
   }
