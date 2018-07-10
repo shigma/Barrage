@@ -1,4 +1,5 @@
 const UpdateObject = require('./update')
+const Coordinate = require('./coordinate')
 
 class Point extends UpdateObject {
   constructor(...args) {
@@ -57,15 +58,7 @@ class Point extends UpdateObject {
   }
 
   copy() {
-    const _this = this
-    function locate() {
-      return Object.assign({}, _this, {
-        _x: _this.x,
-        _y: _this.y,
-        locate
-      })
-    }
-    return locate()
+    return new Coordinate(this)
   }
 }
 

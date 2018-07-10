@@ -13,7 +13,7 @@ module.exports = {
             this.polarLocate()
           } else {
             if (this.timeline < 2000) {
-              this.theta = this.getTheta(this.ref.self.locate())
+              this.theta = this.getTheta(this.link.self)
             }
             this.movePolar(this.speed * (time - 2000) / 2000, this.theta)
           }
