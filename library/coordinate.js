@@ -20,8 +20,8 @@ class Coordinate {
     Object.assign(this, point)
     this._x = point._x
     this._y = point._y
-    this.c = Math.cos(Math.PI * point.face || 0)
-    this.s = Math.sin(Math.PI * point.face || 0)
+    this._c = Math.cos(Math.PI * point.face || 0)
+    this._s = Math.sin(Math.PI * point.face || 0)
   }
 
   resolve(...args) {
@@ -34,8 +34,8 @@ class Coordinate {
       y = args[1]
     }
     return location(
-      this._x + x * this.c - y * this.s,
-      this._y + x * this.s + y * this.c
+      this._x + x * this._c - y * this._s,
+      this._y + x * this._s + y * this._c
     )
   }
 
@@ -49,8 +49,8 @@ class Coordinate {
       y = args[1] - this._y
     }
     return location(
-      x * this.c + y * this.s,
-      y * this.c - x * this.s
+      x * this._c + y * this._s,
+      y * this._c - x * this._s
     )
   }
 }
