@@ -13,9 +13,9 @@ module.exports = {
       },
       mutate() {
         this.movePolar(this.rho, this.theta)
-        if (this.x > 380 || this.x < 20){
+        if (this.x > 480 || this.x < 20){
           this.theta = 1 - this.theta
-        } else if (this.y > 380 || this.y < 20){
+        } else if (this.y > 300 || this.y < 20){
           this.theta = -this.theta
         }
       }
