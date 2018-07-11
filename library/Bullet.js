@@ -14,6 +14,7 @@ class Bullet extends Point {
     })
     if (this.rel === undefined) this.rel = 'base'
     if (this.show === undefined) this.show = true
+    if (this.solid === undefined) this.solid = true
   }
 
   mount(display) {
@@ -74,6 +75,7 @@ Bullet.styles = {
     },
     listener: {
       hitSelf() {
+        if (!this.solid) return
         const self = this.link.self
         return (this._x - self._x) ** 2 + (this._y - self._y) ** 2 <
           (this.radius + self.radius) ** 2
@@ -132,6 +134,7 @@ Bullet.styles = {
     },
     listener: {
       hitSelf() {
+        if (!this.solid) return
         const pos = this.copy().locate(this.link.self)
         const r = this.link.self.radius
         if (pos.x > 0) {
