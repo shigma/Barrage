@@ -362,9 +362,9 @@
 
 坐标系对象的一些方法会返回一个位置对象，用来描述一个点的坐标。位置对象是一个长度为 2 的数组，两个元素分别为坐标的 x 和 y 参数。除此以外，它还拥有下面的属性：
 
-? location.x = location[0]
+? location.x = location\[0]
   当前点的 x 坐标。
-? location.y = location[1]
+? location.y = location\[1]
   当前点的 y 坐标。
 ? location.rho
   当前点的距离原点的距离。
