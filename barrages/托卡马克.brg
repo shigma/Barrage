@@ -14,6 +14,7 @@ module.exports = {
           dir: dir, // 运动方向
           phase: 0, // 将会使用事件管理阶段
           phaseTime: 0,
+          damageTime: 0, // 控制持续掉血速度
           crColor: Color.rgba(1, 1, 1, 0.8),
           bdColor: Color.rgba(1, 0.6, 0.4, 0.4),
           glColor: Color.rgba(1, 0.2, 0.2, 0.6)
@@ -53,6 +54,11 @@ module.exports = {
           this.fillCircle(gradient)
         },
         listener: {
+          hitSelf() {
+            const self = this.parent.ref.self
+            const r = self.radius + (this.phase ? this.innerR : this.radius)
+            return (this._x - self._x) ** 2 + (this._y - self._y) ** 2 < r ** 2
+          },
           nextPhase() {
             // 进入下个阶段的条件
             if (this.phase === 0) {
@@ -63,23 +69,29 @@ module.exports = {
           }
         },
         events: {
+          hitSelf() {
+            if (this.timestamp - this.damageTime > 200) {
+              // 限制掉血速度
+              this.parent.ref.self.hp -= 1
+              this.damageTime = this.timestamp
+            }
+          },
           nextPhase() {
             // 记录下个阶段的开始时间
             this.phaseTime = this.timestamp
             this.phase += 1
           },
-          emit(time) {
+          emit() {
             this.setInterval(600, () => {
               // 由 ref 来负责发射子弹
               // 当然这部分也可以通过主程序中的 setTimeout 或者事件实现
               this.emitBullets(50, (index) => ({
+                layer: 1,
                 state: {
                   // 由点对象产生的子弹会自动带有一个名为 src 的 rel
                   // 这个 src 会自动绑定产生它的点对象在它诞生时的位置
                   rel: 'src',
                   radius: 6,
-                  stage: 0, // 不使用事件管理也是可以的
-                  stageTime: 0,
                   color: Color.rgba(1, 1, 1, 0.8)
                 },
                 mounted() {
@@ -87,21 +99,14 @@ module.exports = {
                   this.theta = index / 25 + this.getTheta(this.ref.self)
                 },
                 mutate(time, delta) {
-                  time -= this.stageTime
-                  if (this.stage < 3) {
-                    this.rho = 100
-                      + (this.stage * 40 + 60) * Math.sin(Math.PI * time / 2000)
-                    if (time > 2000) {
-                      this.stage += 1
-                      this.stageTime = time
-                      this.rho = 100
-                      // 重新设置 rho，为的是最后一次能够正常发射
-                    }
+                  if (time < 6000) {
+                    const amp = Math.floor(time / 2000) * 36 + 56
+                    this.rho = 100 + amp * Math.abs(Math.sin(Math.PI * time / 2000))
                   } else {
-                    this.rho += (1 + time / 1600) * delta / 40
+                    this.rho += (1 + time / 3200) * delta / 48
                   }
                   // 保持转动
-                  this.theta += delta / 12000
+                  this.theta += delta / 16000
                   this.polarLocate()
                 }
               }))

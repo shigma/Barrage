@@ -4,8 +4,8 @@ const Coordinate = require('./coordinate')
 class Point extends UpdateObject {
   constructor(...args) {
     super(...args)
-    if (!this.x) this.x = 0
-    if (!this.y) this.y = 0
+    if (this.x === undefined) this.x = 0
+    if (this.y === undefined) this.y = 0
   }
 
   get _x() {

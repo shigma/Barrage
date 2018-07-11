@@ -27,11 +27,9 @@ new Vue({
       error: '',
       self: new Self({
         hp: 1000,
-        x: 0,
-        y: 0,
         v: 4.5,
-        radius: 6,
-        color: 'grey'
+        color: 'red',
+        radius: 4
       })
     }
   },
@@ -119,6 +117,7 @@ new Vue({
       })
     },
     parseFile(filepath) {
+      if (!filepath) return
       this.barrage = null
       this.error = ''
       if (this.active) {

@@ -44,13 +44,14 @@ class Barrage extends UpdateObject {
   }
 
   parsePoint(type, {state = {}, events, listener, mutate, mounted}) {
+    const id = Math.random() * 1e10
     return new type(Object.assign(state, {
+      id,
       mutate,
       mounted,
       parent: this,
       context: this.context,
-      birth: this.timestamp,
-      id: Math.random() * 1e10
+      birth: this.timestamp
     }), {events, listener})
   }
 
@@ -77,7 +78,7 @@ class Barrage extends UpdateObject {
     // Insert into bullet array
     const layer = bullet.layer = data.layer || 0
     const index = this.bullets.findIndex(bullet => bullet.layer > layer)
-    if (!index) {
+    if (index < 0) {
       this.bullets.push(bullet)
     } else {
       this.bullets.splice(index, 0, bullet)
@@ -99,7 +100,7 @@ class Barrage extends UpdateObject {
   }
 }
 
-Barrage.maxBulletCount = 2048
+Barrage.maxBulletCount = 4096
 
 Barrage.callback = {}
 
