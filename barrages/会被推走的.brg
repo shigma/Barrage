@@ -1,0 +1,54 @@
+const { Utility } = API
+
+module.exports = {
+  reference: {
+    base: {
+      state: {
+        x: 240,
+        y: 160,
+        radius: 1,
+        color: 'yellow',
+        hasemit: false,
+      },
+      mounted(){
+      },
+      matute() {
+        if (!this.hasemit){
+          this.hasemit = true
+          this.emitBullets({
+            layer: 0,
+            state:{
+              radius1: 10,
+              radius2: 10,
+              radius: 10,
+              x: 0,
+              y: 0,
+            },
+            matute(time){
+              if (time < 1000){
+                this.radius2 = 10 + 400 * (time / 1000)
+                if (time > 500){
+                  this.radius1 = 10 + 200 * (time / 1000)**2
+                }
+              }
+            },
+            
+            display(){
+              var context = this.context
+              var gradient = context.createRadialGradient(this.x, this.y, this.radius1,this.x, this.y, this.radius2)
+              gradient.addColorStop(0, 'black')
+              gradient.addColorStop(0.75, 'orange')
+              gradient.addColorStop(1, 'red')
+              context.fillStyle = gradient
+              context.beginPath()
+              context.arc(this.x, this.y, this.radius2, 0, Math.PI * 2, true)
+              context.closePath()
+              context.fill()
+            }
+            
+          })
+        }
+      },
+    }
+  },
+}

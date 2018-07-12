@@ -19,6 +19,7 @@ module.exports = {
     this.setInterval(3000, () => {
       var clr ='white'
       var delta = Math.atan((this.ref.self.x - 240) / (this.ref.self.y - 160))
+      if (this.ref.self.y - 160 < 0) delta += Math.PI
       this.emitBullets({
         layer: 0,
         state: {
