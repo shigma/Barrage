@@ -12,7 +12,7 @@ module.exports = {
       },
       mounted(){
       },
-      matute() {
+      mutate() {
         if (!this.hasemit){
           this.hasemit = true
           this.emitBullets({
@@ -21,19 +21,20 @@ module.exports = {
               radius1: 10,
               radius2: 10,
               radius: 10,
-              x: 0,
-              y: 0,
+              x: 240,
+              y: 280,
+              damagetime: 0,
             },
-            matute(time){
+            mutate(time){
               if (time < 1000){
-                this.radius2 = 10 + 400 * (time / 1000)
+                this.radius2 = 10 + 300 * (time / 1000)
                 if (time > 500){
-                  this.radius1 = 10 + 200 * (time / 1000)**2
+                  this.radius1 = 10 + 150 * (time / 1000)**2
                 }
               }
             },
-            
             display(){
+              console.log(this.radius2)
               var context = this.context
               var gradient = context.createRadialGradient(this.x, this.y, this.radius1,this.x, this.y, this.radius2)
               gradient.addColorStop(0, 'black')
@@ -44,8 +45,27 @@ module.exports = {
               context.arc(this.x, this.y, this.radius2, 0, Math.PI * 2, true)
               context.closePath()
               context.fill()
+            },
+            events:{
+              hitSelf(att){
+                this.link.self.hp -= att
+              }
+            },
+            listener:{
+              hitSelf(){
+                if (this.radius2 < 300) return 0
+                if (this.timestamp - this.damagetime < 200) return 0
+                const self = this.link.self
+                const r = this.radius1// + (this.radius2 - this.radius1) / 2
+                const dist = Math.sqrt((self.x - 240)**2 + (self.y - 280)**2)
+                if (dist > r){
+                  var att = (dist - r)**3 * 1000 / (this.radius2 - r)**3
+                  att = Math.floor(att)
+                  this.damagetime = this.timestamp
+                  return att
+                }
+              }
             }
-            
           })
         }
       },
