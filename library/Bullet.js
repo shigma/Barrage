@@ -2,23 +2,30 @@ const Point = require('./point')
 
 class Bullet extends Point {
   constructor(state, {events, listener}) {
-    const _events = Object.assign({}, Bullet.styles.default.events)
-    const _listener = Object.assign({}, Bullet.styles.default.listener)
-    if (state.style in Bullet.styles) {
-      Object.assign(_events, Bullet.styles[state.style].events)
-      Object.assign(_listener, Bullet.styles[state.style].listener)
-    }
     super(state, {
-      events: Object.assign(_events, events),
-      listener: Object.assign(_listener, listener)
+      events: Object.assign({}, Bullet.events, events),
+      listener: Object.assign({}, Bullet.listener, listener)
     })
-    if (this.rel === undefined) this.rel = 'base'
-    if (this.show === undefined) this.show = true
-    if (this.solid === undefined) this.solid = true
   }
 
   mount(display) {
+    // display function
     this._display = display
+
+    // style initialization
+    if (this.style in Bullet.styles) {
+      const data = Bullet.styles[this.style].state || {}
+      for (const key in data) {
+        if (this[key] === undefined) this[key] = data[key]
+      }
+    }
+
+    // default values
+    if (this.rel === undefined) this.rel = 'base'
+    if (this.show === undefined) this.show = true
+    if (this.judge === undefined) this.judge = 'circle'
+
+    // mounted callback
     if (this.mounted) this.mounted(this.parent)
   }
 
@@ -32,6 +39,10 @@ class Bullet extends Point {
     return this.y + (rel.y || 0)
   }
 
+  get _r() {
+    return this.judgeR || this.radius
+  }
+
   polarLocate(rho = this.rho, theta = this.theta) {
     theta += ((this.ref[this.rel] || {}).face || 0)
     this.x = rho * Math.cos(Math.PI * theta)
@@ -42,8 +53,10 @@ class Bullet extends Point {
     if (!this.show) return
     if (this._display) {
       this._display.call(this, time, delta)
+    } else if (this.style in Bullet.styles) {
+      Bullet.styles[this.style].display.call(this, time, delta)
     } else {
-      Bullet.styles[this.style || 'default'].display.call(this, time, delta)
+      this.fillCircle()
     }
   }
 
@@ -62,62 +75,70 @@ class Bullet extends Point {
   }
 }
 
-Bullet.styles = {
-  default: {
-    events: {
-      hitSelf() {
-        this.link.self.hp --
-        this.destroy()
-      },
-      leave() {
-        this.destroy()
-      }
-    },
-    listener: {
-      hitSelf() {
-        if (!this.solid) return
-        const self = this.link.self
-        return (this._x - self._x) ** 2 + (this._y - self._y) ** 2 <
-          (this.radius + self.radius) ** 2
-      },
-      border() {
-        return this._y < 0 || this._y > this.context.canvas.height
-          || this._x < 0 || this._x > this.context.canvas.width
-      },
-      leave() {
-        return this._x ** 2 + this._y ** 2 > 1e6
-      }
-    },
-    display() {
-      this.fillCircle()
+Bullet.events = {
+  hitSelf() {
+    this.link.self.hp --
+    this.destroy()
+  },
+  leave() {
+    this.destroy()
+  }
+}
+
+Bullet.listener = {
+  hitSelf() {
+    if (this.judge === 'circle') {
+      const self = this.link.self
+      return (this._x - self._x) ** 2 + (this._y - self._y) ** 2 < this._r ** 2 + self._r ** 2
+    } else if (this.judge === 'square') {
+      const self = this.locate(this.link.self)
+      return Math.abs(self.x) < this._r / 2 || Math.abs(self.y) < this._r / 2
     }
   },
+  border() {
+    return this._y < 0 || this._y > this.context.canvas.height
+      || this._x < 0 || this._x > this.context.canvas.width
+  },
+  leave() {
+    return this._x ** 2 + this._y ** 2 > 1e6
+  }
+}
+
+Bullet.styles = {
   border: {
+    state: {
+      radius: 6
+    },
     display() {
       const gradient = this.getGradient(this.color, this.innerR || 0, this.bdColor)
       this.fillCircle(gradient)
     }
   },
   glow: {
+    state: {
+      radius: 6
+    },
     display() {
       const gradient = this.getGradient('rgba(0,0,0,0)', this.outerR, this.glColor)
       this.fillCircle(gradient, this.outerR)
       this.fillCircle(this.color, this.radius)
     }
   },
-  wedge: {
+  scaly: {
+    state: {
+      radius: 6
+    },
     display() {
-      const coord = this.copy()
       this.context.beginPath()
-      this.context.moveTo(...coord.resolve(0, -this.width))
+      this.context.moveTo(...this.resolve(0, -this.width))
       this.context.bezierCurveTo(
-        ...coord.resolve(this.length / 2, -this.width),
-        ...coord.resolve(this.length, -this.width / 2),
-        ...coord.resolve(this.length, 0))
+        ...this.resolve(this.length / 2, -this.width),
+        ...this.resolve(this.length, -this.width / 2),
+        ...this.resolve(this.length, 0))
       this.context.bezierCurveTo(
-        ...coord.resolve(this.length, this.width / 2),
-        ...coord.resolve(this.length / 2, this.width),
-        ...coord.resolve(0, this.width))
+        ...this.resolve(this.length, this.width / 2),
+        ...this.resolve(this.length / 2, this.width),
+        ...this.resolve(0, this.width))
       this.context.closePath()
       const color = this.color
       const gradient = this.context.createRadialGradient(
@@ -131,32 +152,6 @@ Bullet.styles = {
       gradient.addColorStop(1, color.lighter(0.2).output())
       this.context.fillStyle = gradient
       this.context.fill()
-    },
-    listener: {
-      hitSelf() {
-        if (!this.solid) return
-        const pos = this.copy().locate(this.link.self)
-        const r = this.link.self.radius
-        if (pos.x > 0) {
-          const x = pos.x - r * Math.cos(pos.theta)
-          const y = pos.y - r * Math.sin(pos.theta)
-          return (x / this.length) ** 2 + (y / this.width) ** 2 < 1
-        } else if (pos.x > -r) {
-          if (pos.y > this.width + r) {
-            return false
-          } else if (pos.y > this.width) {
-            return pos.x ** 2 + (pos.y - this.width) ** 2 < r ** 2
-          } else if (pos.y > -this.width) {
-            return true
-          } else if (pos.y > -this.width - r) {
-            return pos.x ** 2 + (pos.y + this.width) ** 2 < r ** 2
-          } else {
-            return false
-          }
-        } else {
-          return false
-        }
-      }
     }
   }
 }

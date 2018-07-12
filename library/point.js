@@ -16,6 +16,10 @@ class Point extends UpdateObject {
     return this.y
   }
 
+  get _r() {
+    return this.radius || 0
+  }
+
   display() {
     if (!this.context) return
     if (this.show === false) return
@@ -83,7 +87,25 @@ class Point extends UpdateObject {
   }
 
   copy() {
-    return new Coordinate(this)
+    this._coord = new Coordinate(this)
+    this._timestamp = this.timestamp
+    return this._coord
+  }
+
+  resolve(...args) {
+    if (!this._coord || this._timestamp !== this.timestamp) {
+      return this.copy().resolve(...args)
+    } else {
+      return this._coord.resolve(...args)
+    }
+  }
+
+  locate(...args) {
+    if (!this._coord || this._timestamp !== this.timestamp) {
+      return this.copy().locate(...args)
+    } else {
+      return this._coord.locate(...args)
+    }
   }
 }
 

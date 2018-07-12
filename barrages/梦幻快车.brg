@@ -62,7 +62,7 @@ module.exports = {
           rho: 0,
           rate: 0,
           radius: 6,
-          style: 'wedge',
+          style: 'scaly',
           length: 10,
           width: 5
         },
