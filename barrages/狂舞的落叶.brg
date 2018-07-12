@@ -1,0 +1,55 @@
+const { Utility } = API
+
+module.exports = {
+  reference: {
+    base: {
+      state: {
+        x: 240,
+        y: 140,
+        radius: 20,
+        color: 'yellow'
+      },
+      mounted() {
+        this.setInterval(2000, () => {
+          this.last = this.copy()
+          this.next = {
+            x: Utility.xTransfer(this.x, 150, 36, 60),
+            y: Math.random() * 40 + 120
+          }
+        })
+      },
+      mutate(time) {
+        if (time % 2000 > 1000) {
+          this.smooth(this.last, this.next, (time % 2000 - 1000) / 1000)
+        }
+      }
+    }
+  },
+  mounted() {
+    this.setInterval(40, () => {
+      this.emitBullets(2, () => ({
+        state: {
+          radius: 5,
+          color: 'red',
+          bdColor: 'orange',
+          style: 'rice',
+          length: 6,
+          width: 4
+        },
+        mounted() {
+          const theta = Math.PI * Math.random() * 2
+          this.vx = Math.cos(theta) / 8
+          this.vy = Math.sin(theta) / 8 - 0.03
+          this.dir = Math.sign(this.vx)
+        },
+        mutate(time, delta) {
+          this.x += this.vx * delta
+          this.y += this.vy * delta
+          this.vx -= this.dir / 8000
+          if (this.vy < 0.16) this.vy += delta / 8000
+          this.face = Math.atan2(this.vy, this.vx)
+        }
+      }))
+    })
+  }
+}

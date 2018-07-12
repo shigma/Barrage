@@ -86,6 +86,18 @@ class Point extends UpdateObject {
     return gradient
   }
 
+  bezierCurve(...points) {
+    if (points.length % 6 === 2) {
+      this.context.moveTo(...this.resolve(...points.splice(0, 2)))
+    }
+    for (let i = 0; i < points.length; i += 6) {
+      this.context.bezierCurveTo(
+        ...this.resolve(points[i], points[i + 1]),
+        ...this.resolve(points[i + 2], points[i + 3]),
+        ...this.resolve(points[i + 4], points[i + 5]))
+    }
+  }
+
   copy() {
     this._coord = new Coordinate(this)
     this._timestamp = this.timestamp

@@ -13,7 +13,7 @@ module.exports = {
         this.setInterval(2400, () => {
           this.last = this.copy()
           this.next = {
-            x: Utility.xTransfer(this.x, 200, 60, 100),
+            x: Utility.xTransfer(this.x, 100, 60, 100),
             y: Math.random() * 40 + 140
           }
         })
@@ -61,7 +61,7 @@ module.exports = {
         state: {
           rho: 0,
           rate: 0,
-          radius: 6,
+          radius: 3,
           style: 'scaly',
           length: 10,
           width: 5

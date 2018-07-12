@@ -124,26 +124,40 @@ Bullet.styles = {
       this.fillCircle(this.color, this.radius)
     }
   },
+  rice: {
+    display() {
+      this.context.beginPath()
+      this.context.moveTo(...this.resolve(-this.length, 0))
+      this.context.lineTo(...this.resolve(0, this.width))
+      this.context.lineTo(...this.resolve(this.length, 0))
+      this.context.lineTo(...this.resolve(0, -this.width))
+      this.context.closePath()
+      this.context.strokeStyle = this.bdColor
+      this.context.stroke()
+      this.context.fillStyle = this.color
+      this.context.fill()
+    }
+  },
   scaly: {
     state: {
       radius: 6
     },
     display() {
       this.context.beginPath()
-      this.context.moveTo(...this.resolve(0, -this.width))
-      this.context.bezierCurveTo(
-        ...this.resolve(this.length / 2, -this.width),
-        ...this.resolve(this.length, -this.width / 2),
-        ...this.resolve(this.length, 0))
-      this.context.bezierCurveTo(
-        ...this.resolve(this.length, this.width / 2),
-        ...this.resolve(this.length / 2, this.width),
-        ...this.resolve(0, this.width))
+      this.bezierCurve(
+        -this.width, -this.width,
+        this.length / 2 - this.width, -this.width,
+        this.length - this.width, -this.width / 2,
+        this.length - this.width, 0,
+        this.length - this.width, this.width / 2,
+        this.length / 2 - this.width, this.width,
+        -this.width, this.width
+      )
       this.context.closePath()
       const color = this.color
       const gradient = this.context.createRadialGradient(
-        this._x, this._y, 0,
-        this._x, this._y, this.length
+        this._x, this._y - this.width, 0,
+        this._x, this._y - this.width, this.length
       )
       const ratio = this.width / this.length
       gradient.addColorStop(0, color.lighter(0.2).output())
