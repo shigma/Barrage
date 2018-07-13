@@ -94,7 +94,20 @@ class Point extends UpdateObject {
       this.context.bezierCurveTo(
         ...this.resolve(points[i], points[i + 1]),
         ...this.resolve(points[i + 2], points[i + 3]),
-        ...this.resolve(points[i + 4], points[i + 5]))
+        ...this.resolve(points[i + 4], points[i + 5])
+      )
+    }
+  }
+
+  quadraticCurve(...points) {
+    if (points.length % 4 === 2) {
+      this.context.moveTo(...this.resolve(...points.splice(0, 2)))
+    }
+    for (let i = 0; i < points.length; i += 4) {
+      this.context.quadraticCurveTo(
+        ...this.resolve(points[i], points[i + 1]),
+        ...this.resolve(points[i + 2], points[i + 3])
+      )
     }
   }
 

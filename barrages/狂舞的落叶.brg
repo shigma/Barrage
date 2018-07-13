@@ -29,23 +29,31 @@ module.exports = {
     this.setInterval(40, () => {
       this.emitBullets(2, () => ({
         state: {
-          radius: 5,
           color: 'red',
           bdColor: 'orange',
-          style: 'rice',
-          length: 6,
-          width: 4
+          style: 'rice'
         },
         mounted() {
+          const mode = Math.floor(Math.random() * 3)
           const theta = Math.PI * Math.random() * 2
           this.vx = Math.cos(theta) / 8
-          this.vy = Math.sin(theta) / 8 - 0.03
+          this.vy = Math.sin(theta) / 8
           this.dir = Math.sign(this.vx)
+          if (mode === 0) {
+            this.color = 'yellow'
+            this.bdColor = 'orange'
+          } else if (mode === 1) {
+            this.color = 'white'
+            this.bdColor = 'yellow'
+          } else {
+            this.color = 'white'
+            this.bdColor = 'red'
+          }
         },
         mutate(time, delta) {
           this.x += this.vx * delta
           this.y += this.vy * delta
-          this.vx -= this.dir / 8000
+          this.vx -= this.dir / 6000
           if (this.vy < 0.16) this.vy += delta / 8000
           this.face = Math.atan2(this.vy, this.vx)
         }

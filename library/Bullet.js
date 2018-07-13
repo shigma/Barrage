@@ -125,16 +125,30 @@ Bullet.styles = {
     }
   },
   rice: {
+    state: {
+      thickness: 2,
+      radius: 2.5,
+      length: 5,
+      width: 2.5
+    },
     display() {
       this.context.beginPath()
-      this.context.moveTo(...this.resolve(-this.length, 0))
-      this.context.lineTo(...this.resolve(0, this.width))
-      this.context.lineTo(...this.resolve(this.length, 0))
-      this.context.lineTo(...this.resolve(0, -this.width))
+      this.quadraticCurve(
+        - this.length, 0,
+        - this.length / 2, this.width,
+        0, this.width,
+        this.length / 2, this.width,
+        this.length, 0,
+        this.length / 2, - this.width,
+        0, - this.width,
+        - this.length / 2, - this.width,
+        - this.length, 0
+      )
       this.context.closePath()
-      this.context.strokeStyle = this.bdColor
+      this.context.lineWidth = this.thickness
+      this.context.strokeStyle = this.bdColor.output ? this.bdColor.output() : this.bdColor
+      this.context.fillStyle = this.color.output ? this.color.output() : this.color
       this.context.stroke()
-      this.context.fillStyle = this.color
       this.context.fill()
     }
   },
@@ -145,13 +159,13 @@ Bullet.styles = {
     display() {
       this.context.beginPath()
       this.bezierCurve(
-        -this.width, -this.width,
-        this.length / 2 - this.width, -this.width,
-        this.length - this.width, -this.width / 2,
+        - this.width, - this.width,
+        this.length / 2 - this.width, - this.width,
+        this.length - this.width, - this.width / 2,
         this.length - this.width, 0,
         this.length - this.width, this.width / 2,
         this.length / 2 - this.width, this.width,
-        -this.width, this.width
+        - this.width, this.width
       )
       this.context.closePath()
       const color = this.color
