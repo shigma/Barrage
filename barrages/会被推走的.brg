@@ -14,6 +14,48 @@ module.exports = {
       },
       mounted(){
         this.setNextTick(() => {
+          this.setInterval(1000, () =>{
+            this. emitBullets(20,(index) => ({
+              layer: 2,
+              state: {
+                rel:'',
+                sx: 0,//Math.random() * 480,
+                sy: 0,
+                x: 0,
+                y: 0,
+                radius: 5,
+                vx: Math.random(),
+                vy: 0,
+                v: 5,
+                color: 'orange',
+                index: index,
+              },
+              mounted(){
+                this.vy = Math.sqrt(1 - this.vx**2);
+                if (this.index % 4 == 0){
+                  this.sx = Math.random() * 480
+                  this.sy = 0
+                }else if(this.index % 4 ==1){
+                  this.sx = Math.random() * 480
+                  this.sy = 560
+                  this.vy *= -1
+                }else if(this.index % 4 ==2){
+                  this.sx = 0
+                  this.sy = Math.random() * 560
+                }else if(this.index % 4 ==3){
+                  this.sx = 480
+                  this.sy = Math.random() * 560
+                  this.vx *= -1
+                }
+                this.x = this.sx
+                this.y = this.sy
+                this.setInterval(10,() => {
+                  this.x += this.vx * this.v
+                  this.y += this.vy * this.v
+                })
+              },
+            }))
+          })
           this.emitBullets({
             layer: 1,
             state:{
