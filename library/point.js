@@ -16,6 +16,10 @@ class Point extends UpdateObject {
     return this.y
   }
 
+  get _r() {
+    return this.radius || 0
+  }
+
   display() {
     if (!this.context) return
     if (this.show === false) return
@@ -82,8 +86,51 @@ class Point extends UpdateObject {
     return gradient
   }
 
+  bezierCurve(...points) {
+    if (points.length % 6 === 2) {
+      this.context.moveTo(...this.resolve(...points.splice(0, 2)))
+    }
+    for (let i = 0; i < points.length; i += 6) {
+      this.context.bezierCurveTo(
+        ...this.resolve(points[i], points[i + 1]),
+        ...this.resolve(points[i + 2], points[i + 3]),
+        ...this.resolve(points[i + 4], points[i + 5])
+      )
+    }
+  }
+
+  quadraticCurve(...points) {
+    if (points.length % 4 === 2) {
+      this.context.moveTo(...this.resolve(...points.splice(0, 2)))
+    }
+    for (let i = 0; i < points.length; i += 4) {
+      this.context.quadraticCurveTo(
+        ...this.resolve(points[i], points[i + 1]),
+        ...this.resolve(points[i + 2], points[i + 3])
+      )
+    }
+  }
+
   copy() {
-    return new Coordinate(this)
+    this._coord = new Coordinate(this)
+    this._timestamp = this.timestamp
+    return this._coord
+  }
+
+  resolve(...args) {
+    if (!this._coord || this._timestamp !== this.timestamp) {
+      return this.copy().resolve(...args)
+    } else {
+      return this._coord.resolve(...args)
+    }
+  }
+
+  locate(...args) {
+    if (!this._coord || this._timestamp !== this.timestamp) {
+      return this.copy().locate(...args)
+    } else {
+      return this._coord.locate(...args)
+    }
   }
 }
 

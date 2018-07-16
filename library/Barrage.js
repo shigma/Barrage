@@ -55,13 +55,16 @@ class Barrage extends UpdateObject {
     }), {events, listener})
   }
 
-  setReference(key, data) {
+  setReference(...args) {
+    const data = args[args.length - 1]
+    const key = args.length > 1 ? args[0] : Math.floor(Math.random() * 1000)
     const point = this.parsePoint(Point, data)
     if (point.mounted) point.mounted.call(point, this)
     if (data.display) point.display = function(time, delta) {
       if (this.show !== false) data.display.call(this, time, delta)
     }
     this.ref[key] = point
+    return key
   }
 
   pushBullet(data) {

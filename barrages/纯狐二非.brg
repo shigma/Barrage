@@ -13,7 +13,7 @@ module.exports = {
         this.setInterval(2000, () => {
           this.last = this.copy()
           this.next = {
-            x: Utility.xTransfer(this.x, 200, 60, 100),
+            x: Utility.xTransfer(this.x, 100, 60, 100),
             y: Math.random() * 40 + 140
           }
         })
@@ -45,7 +45,7 @@ module.exports = {
         },
         mutate(time, delta) {
           this.rho += (1 + time / 500) * delta / 20
-          this.theta -= delta / 10000 * this.direction
+          this.theta -= delta / 12000 * this.direction
           this.polarLocate()
         }
       }))

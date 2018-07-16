@@ -15,6 +15,10 @@ class Self extends Point {
     this.display()
   }
 
+  get _r() {
+    return this.judgeR || this.radius
+  }
+
   mutate() {
     const speed = this.v / Math.sqrt(
       (this.keyState.ArrowDown ^ this.keyState.ArrowUp) +

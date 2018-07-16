@@ -34,9 +34,9 @@ function rint(...args) {
 }
 
 function xTransfer(x, maigin, min, max) {
-  if (x < maigin) {
+  if (x < maigin + max) {
     return x + rreal(min, max)
-  } else if (x > 480 - maigin) {
+  } else if (x > 480 - maigin - max) {
     return x - rreal(min, max)
   } else {
     return x + rreal(min, max) * rpm()

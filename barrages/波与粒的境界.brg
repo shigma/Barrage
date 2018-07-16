@@ -1,0 +1,32 @@
+module.exports = {
+  reference: {
+    base: {
+      state: {
+        x: 240,
+        y: 280,
+        radius: 15,
+        color: 'violet'
+      }
+    }
+  },
+  mounted() {
+    this.setInterval(100, (time) => {
+      this.emitBullets(8, (index) => ({
+        state: {
+          rho: 0,
+          face: index / 4,
+          style: 'rice',
+          color: 'white',
+          bdColor: 'violet'
+        },
+        mounted() {
+          this.face += Math.sin(time / 1000)
+        },
+        mutate(time, delta) {
+          this.rho += (1 + time / 1000) * delta / 16
+          this.polarLocate(this.rho, this.face)
+        }
+      }))
+    })
+  }
+}

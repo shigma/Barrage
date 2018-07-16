@@ -20,6 +20,7 @@ class Coordinate {
     Object.assign(this, point)
     this._x = point._x
     this._y = point._y
+    this._r = point._r
     this._c = Math.cos(Math.PI * point.face || 0)
     this._s = Math.sin(Math.PI * point.face || 0)
   }

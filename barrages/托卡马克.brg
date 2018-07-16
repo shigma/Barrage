@@ -4,7 +4,7 @@ module.exports = {
   methods: {
     // 共有 2 个类似的发射源，使用函数可以避免重复的代码
     setRef(id, dir) {
-      this.setReference('base' + id, {
+      this.setReference({
         state: {
           x: 240,
           y: 280,

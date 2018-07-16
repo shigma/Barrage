@@ -1,0 +1,63 @@
+const { Utility } = API
+
+module.exports = {
+  reference: {
+    base: {
+      state: {
+        x: 240,
+        y: 140,
+        radius: 20,
+        color: 'yellow'
+      },
+      mounted() {
+        this.setInterval(2000, () => {
+          this.last = this.copy()
+          this.next = {
+            x: Utility.xTransfer(this.x, 150, 36, 60),
+            y: Math.random() * 40 + 120
+          }
+        })
+      },
+      mutate(time) {
+        if (time % 2000 > 1000) {
+          this.smooth(this.last, this.next, (time % 2000 - 1000) / 1000)
+        }
+      }
+    }
+  },
+  mounted() {
+    this.setInterval(40, () => {
+      this.emitBullets(2, () => ({
+        state: {
+          color: 'red',
+          bdColor: 'orange',
+          style: 'rice'
+        },
+        mounted() {
+          const mode = Math.floor(Math.random() * 3)
+          const theta = Math.PI * Math.random() * 2
+          this.vx = Math.cos(theta) / 8
+          this.vy = Math.sin(theta) / 8
+          this.dir = Math.sign(this.vx)
+          if (mode === 0) {
+            this.color = 'yellow'
+            this.bdColor = 'orange'
+          } else if (mode === 1) {
+            this.color = 'white'
+            this.bdColor = 'yellow'
+          } else {
+            this.color = 'white'
+            this.bdColor = 'red'
+          }
+        },
+        mutate(time, delta) {
+          this.x += this.vx * delta
+          this.y += this.vy * delta
+          this.vx -= this.dir / 6000
+          if (this.vy < 0.16) this.vy += delta / 8000
+          this.face = Math.atan2(this.vy, this.vx)
+        }
+      }))
+    })
+  }
+}
