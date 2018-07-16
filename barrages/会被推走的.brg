@@ -3,16 +3,110 @@ const { Utility } = API
 module.exports = {
   reference: {
     base: {
+      layer: 2,
       state: {
         x: 240,
-        y: 160,
-        radius: 1,
+        y: 280,
+        radius: 5,
         color: 'yellow',
         hasemit: false,
+        w: 1 / 5000,
       },
       mounted(){
+        this.setNextTick(() => {
+          this.emitBullets({
+            layer: 1,
+            state:{
+              x: -245,
+              y: -285,
+              radius: 5,
+              r: 160,
+              color: 'violet',
+              w: 1 / 5000, 
+            },
+            mutate(time){
+              if(time > 1000){
+                this.x = this.r * Math.cos(time * this.w * Math.PI)
+                this.y = this.r * Math.sin(time * this.w * Math.PI)
+              }
+            },
+            events:{
+              hitSelf(){}
+            }
+          })
+        })
+        this.setTimeout(1000,() => {
+          this.setInterval(1000, () => {
+            var ex = this.x + 240
+            var ey = this.y + 280
+            var vx = (240 - ex) / 160
+            var vy = (280 - ey) / 160
+            var v = 10
+            var bulletdist = 20
+            this.emitBullets(3,(index) => ({
+              layer: 1,
+              state:{
+                //rel: 'src',
+                x: ex - vx * index * bulletdist,
+                y: ey - vy * index * bulletdist,
+                radius: 5,
+                r: 45,
+                color: 'violet',
+                vis: true,
+                ax: vx,
+                ay: vy,
+              },
+              mounted(){
+                this.setInterval(10,() => {
+                  this.x += vx * v
+                  this.y += vy * v
+                })
+              },
+              display(){
+                if (!this.vis) return
+                var context = this.context
+                var gradient = context.createRadialGradient(this.x, this.y, 0,this.x, this.y, this.r * 1.1)
+                gradient.addColorStop(0, 'white')
+                gradient.addColorStop(0.75, this.color)
+                gradient.addColorStop(1, 'white')
+                context.fillStyle = gradient
+                context.beginPath()
+                context.arc(this.x, this.y, this.r * 1.1, 0, Math.PI * 2, true)
+                context.closePath()
+                context.fill()
+              },
+              events:{
+                hitSelf(){
+                  this.link.self.hp -= 1
+                  this.vis = false
+                  this.setInterval(50, 3, () => {
+                    var self = this.link.self
+                    var v = 25
+                    self.x += this.ax * v
+                    self.y += this.ay * v
+                  })
+                }
+              },
+              listener:{
+                hitSelf(){
+                  if (!this.vis) return false
+                  const self = this.link.self
+                  const dist = Math.sqrt((self.x - this.x)**2 + (self.y - this.y)**2)
+                  if (dist < this.r){
+                    return true
+                  }
+                }
+              }
+            }))
+          })
+        });
       },
-      mutate() {
+      mutate(time) {
+        if (time > 1000){
+          this.x = 160 * Math.cos(time * this.w * Math.PI)
+          this.y = 160 * Math.sin(time * this.w * Math.PI)
+        }
+        
         if (!this.hasemit){
           this.hasemit = true
           this.emitBullets({
@@ -34,7 +128,6 @@ module.exports = {
               }
             },
             display(){
-              console.log(this.radius2)
               var context = this.context
               var gradient = context.createRadialGradient(this.x, this.y, this.radius1,this.x, this.y, this.radius2)
               gradient.addColorStop(0, 'black')
