@@ -4,7 +4,7 @@ module.exports = {
       state: {
         x: 240,
         y: 280,
-        radius: 15,
+        radius: 12,
         color: 'violet'
       }
     }
@@ -13,7 +13,7 @@ module.exports = {
     this.setInterval(100, (time) => {
       this.emitBullets(8, (index) => ({
         state: {
-          rho: 0,
+          rho: 12,
           face: index / 4,
           style: 'rice',
           color: 'white',

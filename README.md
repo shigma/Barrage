@@ -1,6 +1,6 @@
 # Barrage
 
-一个 JavaScript 的弹幕生成软件。
+一个 JavaScript 的弹幕生成软件。**已经转移至[这里](https://github.com/Shigma/STG)**.
 
 ## 本地构建
 
